@@ -16,6 +16,8 @@ typing_extensions = "^4.12.2"
 lf_toolkit = { git = "https://github.com/lambda-feedback/toolkit-python.git", branch = "main", extras = [
     "ipc",
 ] }
+ultralytics = "^8.1.50"
+pillow = "^10.3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
