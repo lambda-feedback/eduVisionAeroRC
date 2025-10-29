@@ -50,7 +50,7 @@ def evaluation_function(
     else:
         return Result(
             is_correct=False,
-            feedback='No target class specified.'
+            feedback_items=[('ERROR', 'No target class specified.')]
         )
    
 
