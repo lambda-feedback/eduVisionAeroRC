@@ -18,6 +18,7 @@ lf_toolkit = { git = "https://github.com/lambda-feedback/toolkit-python.git", br
 ] }
 ultralytics = "^8.1.50"
 pillow = "^10.3.0"
+opencv-python-headless = "^4.12.0.88"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
