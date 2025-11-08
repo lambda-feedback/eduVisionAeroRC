@@ -30,5 +30,5 @@ def evaluation_function(
     """
 
     return Result(
-        is_correct=True
+        is_correct=response == answer
     )
