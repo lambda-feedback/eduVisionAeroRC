@@ -32,4 +32,4 @@ ENV FUNCTION_COMMAND="python"
 ENV FUNCTION_ARGS="-m,evaluation_function.main"
 
 ENV FUNCTION_INTERFACE="file"
-ENV LOG_LEVEL="debug"
+# ENV LOG_LEVEL="debug"
