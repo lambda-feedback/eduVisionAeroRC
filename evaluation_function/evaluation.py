@@ -38,8 +38,8 @@ def evaluation_function(
 
     model =  YOLO(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'model.pt'))
 
-   
-    if isinstance(params, dict) and 'target' in params:
+
+    if params is not None and 'target' in params:
         target_class = params['target']
     else:
         return Result(
