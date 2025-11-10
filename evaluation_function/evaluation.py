@@ -38,10 +38,9 @@ def evaluation_function(
 
     model =  YOLO(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'model.pt'))
 
+    target_class = params.get("target", "")
 
-    if params is not None and 'target' in params:
-        target_class = params['target']
-    else:
+    if target_class == "":
         return Result(
             is_correct=False,
             feedback_items=[('ERROR', 'No target class specified.')]
@@ -98,8 +97,8 @@ def evaluation_function(
    
     response_detection = get_best_detection(response)
 
-    print(target_class)
-    print(response_detection)
+    #print(target_class)
+    #print(response_detection)
     # Determine if correct based on best detections matching
     is_correct = response_detection == target_class and response_detection is not None
 
