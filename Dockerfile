@@ -31,6 +31,6 @@ ENV FUNCTION_COMMAND="python"
 # Args to start the evaluation function with
 ENV FUNCTION_ARGS="-m,evaluation_function.main"
 
-# ENV FUNCTION_RPC_TRANSPORT="ipc"
-ENV FUNCTION_INTERFACE="file"
-ENV LOG_LEVEL="debug"
+ENV FUNCTION_RPC_TRANSPORT="ipc"
+# ENV FUNCTION_INTERFACE="file"
+# ENV LOG_LEVEL="debug"
