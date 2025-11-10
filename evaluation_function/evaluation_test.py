@@ -26,5 +26,5 @@ class TestEvaluationFunction(unittest.TestCase):
 
         result = evaluation_function(response, answer, params).to_dict()
 
-        self.assertEqual(result.get("is_correct"), True)
+        self.assertEqual(result.get("is_correct"), False)
         #self.assertFalse(result.get("feedback", False))

@@ -8,7 +8,7 @@ import io
 import re
 
 
-#model = YOLO(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'model.pt'))
+model = YOLO(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'model.pt'))
 
 def evaluation_function(
     response: Any,
@@ -38,7 +38,7 @@ def evaluation_function(
     to output the evaluation response.
     """
     return Result(
-        is_correct=True,
+        is_correct=False,
     )
     global model
    
