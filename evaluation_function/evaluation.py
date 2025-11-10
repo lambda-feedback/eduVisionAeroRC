@@ -37,9 +37,7 @@ def evaluation_function(
     return types and that evaluation_function() is the main function used
     to output the evaluation response.
     """
-    return Result(
-        is_correct=False,
-    )
+
     global model
    
     # Load the YOLO model
