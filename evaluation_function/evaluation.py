@@ -39,7 +39,7 @@ def evaluation_function(
     model =  YOLO(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'model.pt'))
 
     target_class = params.get("target", "")
-
+    print(target_class)
     if target_class == "":
         return Result(
             is_correct=False,
@@ -104,4 +104,5 @@ def evaluation_function(
 
     return Result(
         is_correct=is_correct,
+        feedback_items=[('Result', 'Target class is ' + target_class + '. Detected class is ' + (response_detection if response_detection else 'unknown') + '.')]
     )
