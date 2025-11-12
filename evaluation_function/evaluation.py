@@ -36,6 +36,9 @@ def evaluation_function(
     to output the evaluation response.
     """
 
+    print("### Response: ", response)
+    print("### Params: ", params)
+
     model =  YOLO(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'model.pt'))
 
     target_class = params.get("target", "")
