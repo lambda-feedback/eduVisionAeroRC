@@ -90,12 +90,12 @@ def evaluation_function(
                     # Check if center is inside bbox
                     if x1 <= center_x <= x2 and y1 <= center_y <= y2:
                         area = (x2 - x1) * (y2 - y1)
-                        valid_detections.append((area, conf, cls))
+                        valid_detections.append((conf, area, cls))
 
             if valid_detections:
-                # Sort by area descending, take the largest
+                # Sort by conf descending, take the largest
                 valid_detections.sort(reverse=True)
-                largest_area, conf, cls = valid_detections[0]
+                conf, largest_area, cls = valid_detections[0]
 
                 # For this class, keep track of highest conf across images
                 if conf > best_conf:
