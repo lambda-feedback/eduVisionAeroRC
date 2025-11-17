@@ -81,16 +81,19 @@ def evaluation_function(
 
             # Filter detections: bbox must contain center and be the largest
             valid_detections = []
+            fallback_detections = []
             for result in results:
                 for box in result.boxes:
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
                     conf = box.conf[0].item()
                     cls = model.names[int(box.cls[0].item())]
-
+                    area = (x2 - x1) * (y2 - y1)
+                    
                     # Check if center is inside bbox
                     if x1 <= center_x <= x2 and y1 <= center_y <= y2:
-                        area = (x2 - x1) * (y2 - y1)
                         valid_detections.append((conf, area, cls))
+                    # Add to fallback
+                    fallback_detections.append((conf, area, cls))
 
             if valid_detections:
                 # Sort by conf descending, take the largest
@@ -101,6 +104,17 @@ def evaluation_function(
                 if conf > best_conf:
                     best_conf = conf
                     best_detection = cls
+            
+            elif fallback_detections:
+                # Sort by conf descending, take the largest
+                fallback_detections.sort(reverse=True)
+                conf, largest_area, cls = fallback_detections[0]
+
+                # For this class, keep track of highest conf across images
+                if conf > best_conf:
+                    best_conf = conf
+                    best_detection = cls
+
 
         return best_detection
 
