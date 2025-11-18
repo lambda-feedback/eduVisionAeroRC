@@ -126,7 +126,7 @@ def evaluation_function(
     # Determine if correct based on best detections matching
     is_correct = response_detection == target_class and response_detection is not None
     target_text = f'Target class is {target_class}.'
-    result_text = f'Detected class is {f"{response_detection} ({response_conf})" if response_detection else "unknown"}.'
+    result_text = f'Detected class is {f"{response_detection} ({round(response_conf,2)})" if response_detection else "unknown"}.'
     return Result(
         is_correct=is_correct,
         feedback_items=[('Target', target_text), ('Result', result_text)]
