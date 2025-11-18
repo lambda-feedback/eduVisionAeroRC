@@ -116,17 +116,18 @@ def evaluation_function(
                     best_detection = cls
 
 
-        return best_detection
+        return best_conf, best_detection
 
    
-    response_detection = get_best_detection(response)
+    response_conf, response_detection = get_best_detection(response)
 
     #print(target_class)
     #print(response_detection)
     # Determine if correct based on best detections matching
     is_correct = response_detection == target_class and response_detection is not None
-    feedback_text = f'Target class is {target_class} \nDetected class is {response_detection if response_detection else "unknown"}.'
+    target_text = f'Target class is {target_class}.'
+    result_text = f'Detected class is {f"{response_detection} ({response_conf})" if response_detection else "unknown"}.'
     return Result(
         is_correct=is_correct,
-        feedback_items=[('Result', feedback_text)]
+        feedback_items=[('Target', target_text), ('Result', result_text)]
     )
