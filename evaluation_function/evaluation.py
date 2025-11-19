@@ -48,13 +48,13 @@ def evaluation_function(
 
     model = _model_cache
 
-    target_class = params.get("target", "")
+    target_class = params.get("target", None)
     print(target_class)
-    if target_class == "":
-        return Result(
-            is_correct=False,
-            feedback_items=[('ERROR', 'No target class specified.')]
-        )
+    #if target_class == "":
+    #    return Result(
+    #        is_correct=False,
+    #        feedback_items=[('ERROR', 'No target class specified.')]
+    #    )
    
 
     def get_best_detection(images):
@@ -65,7 +65,8 @@ def evaluation_function(
             if isinstance(img_obj, dict) and 'data' in img_obj:
                 base64_img = img_obj['data']
             else:
-                base64_img = img_obj  # Assume it's a string if not dict
+                continue
+                #base64_img = img_obj  # Assume it's a string if not dict
 
             # Decode base64 to image
             base64_img = re.sub('^data:.*;base64,','',base64_img)
@@ -125,9 +126,20 @@ def evaluation_function(
     #print(response_detection)
     # Determine if correct based on best detections matching
     is_correct = response_detection == target_class and response_detection is not None
-    target_text = f'Target class is {target_class}.'
-    result_text = f'Detected class is {f"{response_detection} ({round(response_conf,2)})" if response_detection else "unknown"}.'
+    target_text = f'Target component is {target_class if target_class else "unknown (can be specified in 'target' param)"}.'
+    result_text = f'Detected component is {f"{response_detection} ({round(response_conf,2)})" if response_detection else "unknown"}.'
+
+    feedback_items = []
+    show_target = params.get("show_target", True)
+    if show_target:
+        feedback_items.append(('Target', target_text))
+    feedback_items.append(('Result', result_text))
+
+    # Jeśli show_target == False, pokazuj tylko Result
+    if not show_target:
+        feedback_items = [('Result', result_text)]
+
     return Result(
         is_correct=is_correct,
-        feedback_items=[('Target', target_text), ('Result', result_text)]
+        feedback_items=feedback_items
     )
