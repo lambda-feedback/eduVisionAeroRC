@@ -2,10 +2,11 @@ import os
 from typing import Any
 from lf_toolkit.evaluation import Result, Params
 from ultralytics import YOLO
-import base64
 from PIL import Image
 import io
 import re
+import requests
+from requests.exceptions import RequestException
 
 _model_cache = None
 
@@ -60,18 +61,15 @@ def evaluation_function(
     def get_best_detection(images):
         best_detection = None
         best_conf = 0.0
+        analysed_images = 0
 
-        for img_obj in images:
-            if isinstance(img_obj, dict) and 'data' in img_obj:
-                base64_img = img_obj['data']
-            else:
+        for image_url in images:
+            try:
+                image_response = requests.get(image_url)
+                img = Image.open(io.BytesIO(image_response.content))
+            except RequestException as e:
+                print('Failed to get image: ', e)
                 continue
-                #base64_img = img_obj  # Assume it's a string if not dict
-
-            # Decode base64 to image
-            base64_img = re.sub('^data:.*;base64,','',base64_img)
-            img_data = base64.b64decode(base64_img)
-            img = Image.open(io.BytesIO(img_data))
 
             # Run YOLO prediction
             results = model.predict(img, conf=0.5)  # Adjust conf threshold if needed
@@ -116,11 +114,23 @@ def evaluation_function(
                     best_conf = conf
                     best_detection = cls
 
+            analysed_images += 1
 
-        return best_conf, best_detection
+
+        return best_conf, best_detection, analysed_images
 
    
-    response_conf, response_detection = get_best_detection(response)
+    response_conf, response_detection, analysed_image_count = get_best_detection(response)
+
+    if analysed_image_count == 0:
+        is_correct = False
+        feedback_items = []
+        feedback_items.append(('Response', 'Please upload at least one image'))
+
+        return Result(
+            is_correct=is_correct,
+            feedback_items=feedback_items
+        )
 
     #print(target_class)
     #print(response_detection)
