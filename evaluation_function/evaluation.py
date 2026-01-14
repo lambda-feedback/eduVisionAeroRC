@@ -38,6 +38,8 @@ def evaluation_function(
     to output the evaluation response.
     """
     global _model_cache
+    # Answer is where the teacher uploaded images as extra data can be loaded from
+    print("### Answer: ", answer)
     print("### Response: ", response)
     print("### Params: ", params)
     
