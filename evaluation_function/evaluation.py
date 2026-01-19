@@ -148,7 +148,8 @@ def evaluation_function(
     feedback_items.append(('Result', result_text))
 
     if params.get('debug', False):
-        feedback_items.append(('Image Test', f'![Test Image]({response[0]})'))
+        feedback_items.append(('Image Test', f'![Test Image]({response[0]['url']})'))
+        feedback_items.append(('Count of Images', f'Image Count: {analysed_image_count}'))
 
     # Jeśli show_target == False, pokazuj tylko Result
     if not show_target:
