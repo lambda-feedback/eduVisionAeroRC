@@ -147,7 +147,8 @@ def evaluation_function(
         feedback_items.append(('Target', target_text))
     feedback_items.append(('Result', result_text))
 
-    feedback_items.append(('Image Test', '![Test Image](https://lambda-feedback-dev-frontend-client-bucket.s3.eu-west-2.amazonaws.com/bc4655d5-52d1-4333-9b72-f59ebabe64f4/396998fd-3f94-48eb-8881-96369e6015af.png)'))
+    if params.get('debug', False):
+        feedback_items.append(('Image Test', f'![Test Image]({response[0]})'))
 
     # Jeśli show_target == False, pokazuj tylko Result
     if not show_target:
