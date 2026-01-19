@@ -65,9 +65,9 @@ def evaluation_function(
         best_conf = 0.0
         analysed_images = 0
 
-        for image_url in images:
+        for image in images:
             try:
-                image_response = requests.get(image_url)
+                image_response = requests.get(image["url"])
                 img = Image.open(io.BytesIO(image_response.content))
             except RequestException as e:
                 print('Failed to get image: ', e)
