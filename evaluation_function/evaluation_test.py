@@ -22,7 +22,8 @@ class TestEvaluationFunction(unittest.TestCase):
     """
     # git test
     def test_evaluation(self):
-        response, answer, params = "Hello, World", "Hello, World", Params()
+        response = '{"comment": "", "name": "classified_processed.png", "size": 50916, "type": "image/png", "url": ""}'
+        answer, params = "Hello, World", Params()
 
         result = evaluation_function(response, answer, params).to_dict()
 
