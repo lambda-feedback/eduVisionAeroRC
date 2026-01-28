@@ -1,6 +1,7 @@
 import os
 from typing import Any
 from lf_toolkit.evaluation import Result, Params
+from lf_toolkit.evaluation.image_upload import upload_image, ImageUploadError
 from ultralytics import YOLO
 from PIL import Image
 import io
@@ -142,6 +143,16 @@ def evaluation_function(
     result_text = f'Detected component is {f"{response_detection} ({round(response_conf,2)})" if response_detection else "unknown"}.'
 
     feedback_items = []
+
+    try:
+        # TODO: Update this with the image annotation instead of the original image
+        image_response = requests.get(response[0]["url"])
+        img = Image.open(io.BytesIO(image_response.content))
+        feedback_items.append(('Feedback Image', upload_image(img)))
+    except ImageUploadError as e:
+        print("Failed to upload image feedback", e)
+
+
     show_target = params.get("show_target", True)
     if show_target:
         feedback_items.append(('Target', target_text))

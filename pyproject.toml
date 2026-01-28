@@ -13,11 +13,11 @@ evaluation_function_dev = "evaluation_function.dev:dev"
 [tool.poetry.dependencies]
 python = "^3.12"
 typing_extensions = "^4.12.2"
-lf_toolkit = { git = "https://github.com/lambda-feedback/toolkit-python.git", tag = "v1.0", extras = [
+lf_toolkit = { git = "https://github.com/lambda-feedback/toolkit-python.git", branch = "feature/image-upload", extras = [
     "ipc",
 ] }
 ultralytics = "^8.1.50"
-pillow = "^10.3.0"
+pillow = "^12.1.0"
 opencv-python-headless = "^4.12.0.88"
 
 [tool.poetry.group.dev.dependencies]
