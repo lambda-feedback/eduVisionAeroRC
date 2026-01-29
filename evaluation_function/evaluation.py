@@ -148,7 +148,7 @@ def evaluation_function(
         # TODO: Update this with the image annotation instead of the original image
         image_response = requests.get(response[0]["url"])
         img = Image.open(io.BytesIO(image_response.content))
-        feedback_items.append(('Feedback Image', upload_image(img)))
+        feedback_items.append(('Feedback Image', upload_image(img, 'eduvision')))
     except ImageUploadError as e:
         print("Failed to upload image feedback", e)
 
@@ -159,7 +159,7 @@ def evaluation_function(
     feedback_items.append(('Result', result_text))
 
     if params.get('debug', False):
-        feedback_items.append(('Image Test', f'![Test Image]({response[0]['url']})'))
+        feedback_items.append(('Uploaded Image [0]', f'![Test Image]({response[0]['url']})'))
         feedback_items.append(('Count of Images', f'Image Count: {analysed_image_count}'))
 
     # Jeśli show_target == False, pokazuj tylko Result
