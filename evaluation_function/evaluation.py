@@ -148,7 +148,7 @@ def evaluation_function(
         # TODO: Update this with the image annotation instead of the original image
         image_response = requests.get(response[0]["url"])
         img = Image.open(io.BytesIO(image_response.content))
-        feedback_items.append(('Feedback Image', upload_image(img, 'eduvision')))
+        feedback_items.append(('Feedback Image', f'{upload_image(img, 'eduvision')} <br>'))
     except ImageUploadError as e:
         print("Failed to upload image feedback", e)
 
