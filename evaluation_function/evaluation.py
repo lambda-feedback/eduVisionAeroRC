@@ -125,9 +125,9 @@ def evaluation_function(
                     best_conf = best_det[4]
                     best_detection = best_det[5]
                 best_idx = idx_max
-            annotated = draw_annotations(img.copy(), used_detections, best_idx)
-            annotated_images.append((annotated, used_detections, best_idx))
-            analysed_images += 1
+            #annotated = draw_annotations(img.copy(), used_detections, best_idx)
+            #annotated_images.append((annotated, used_detections, best_idx))
+            #analysed_images += 1
         return best_conf, best_detection, analysed_images, annotated_images
 
    
@@ -154,11 +154,11 @@ def evaluation_function(
 
     feedback_items = []
     # Upload all annotated images
-    #for idx, (img, detections, best_idx) in enumerate(annotated_images):
-     #   try:
-      #      feedback_items.append((f'Feedback Image [{idx}]', f'{upload_image(img, "eduvision")} <br>'))
-       # except ImageUploadError as e:
-        #    print(f"Failed to upload image feedback {idx}", e)
+    for idx, (img, detections, best_idx) in enumerate(annotated_images):
+        try:
+            feedback_items.append((f'Feedback Image [{idx}]', f'{upload_image(img, "eduvision")} <br>'))
+        except ImageUploadError as e:
+            print(f"Failed to upload image feedback {idx}", e)
 
 
     show_target = params.get("show_target", True)
