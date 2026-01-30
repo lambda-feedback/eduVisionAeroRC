@@ -3,11 +3,12 @@ from typing import Any
 from lf_toolkit.evaluation import Result, Params
 from lf_toolkit.evaluation.image_upload import upload_image, ImageUploadError
 from ultralytics import YOLO
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import io
 import re
 import requests
 from requests.exceptions import RequestException
+import random
 
 _model_cache = None
 
@@ -61,69 +62,77 @@ def evaluation_function(
     #    )
    
 
-    def get_best_detection(images):
+
+
+    # Assign a color to each class
+    def get_class_color(class_name):
+        random.seed(hash(class_name) % 10000)
+        return tuple(random.choices(range(50, 256), k=3))
+
+    def draw_annotations(img, detections, best_idx=None):
+        draw = ImageDraw.Draw(img)
+        try:
+            font = ImageFont.truetype("arial.ttf", 18)
+        except:
+            font = ImageFont.load_default()
+        for i, det in enumerate(detections):
+            x1, y1, x2, y2, conf, cls = det
+            color = get_class_color(cls)
+            width = 4 if i == best_idx else 2
+            outline = color if i != best_idx else (255, 0, 0)
+            draw.rectangle([x1, y1, x2, y2], outline=outline, width=width)
+            label = f"{cls} {conf:.2f}"
+            text_size = draw.textsize(label, font=font)
+            draw.rectangle([x1, y1 - text_size[1], x1 + text_size[0], y1], fill=outline)
+            draw.text((x1, y1 - text_size[1]), label, fill=(255,255,255), font=font)
+        return img
+
+    def analyze_images(images):
         best_detection = None
         best_conf = 0.0
         analysed_images = 0
-
-        for image in images:
+        annotated_images = []
+        for idx, image in enumerate(images):
             try:
                 image_response = requests.get(image["url"])
-                img = Image.open(io.BytesIO(image_response.content))
+                img = Image.open(io.BytesIO(image_response.content)).convert("RGB")
             except RequestException as e:
                 print('Failed to get image: ', e)
                 continue
-
-            # Run YOLO prediction
-            results = model.predict(img, conf=0.5)  # Adjust conf threshold if needed
-
-            # Get image center
+            results = model.predict(img, conf=0.5)
+            detections = []
+            fallback_detections = []
             img_width, img_height = img.size
             center_x, center_y = img_width / 2, img_height / 2
-
-            # Filter detections: bbox must contain center and be the largest
-            valid_detections = []
-            fallback_detections = []
             for result in results:
                 for box in result.boxes:
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
                     conf = box.conf[0].item()
                     cls = model.names[int(box.cls[0].item())]
-                    area = (x2 - x1) * (y2 - y1)
-                    
                     # Check if center is inside bbox
                     if x1 <= center_x <= x2 and y1 <= center_y <= y2:
-                        valid_detections.append((conf, area, cls))
-                    # Add to fallback
-                    fallback_detections.append((conf, area, cls))
-
-            if valid_detections:
-                # Sort by conf descending, take the largest
-                valid_detections.sort(reverse=True)
-                conf, largest_area, cls = valid_detections[0]
-
-                # For this class, keep track of highest conf across images
-                if conf > best_conf:
-                    best_conf = conf
-                    best_detection = cls
-            
-            elif fallback_detections:
-                # Sort by conf descending, take the largest
-                fallback_detections.sort(reverse=True)
-                conf, largest_area, cls = fallback_detections[0]
-
-                # For this class, keep track of highest conf across images
-                if conf > best_conf:
-                    best_conf = conf
-                    best_detection = cls
-
+                        detections.append((x1, y1, x2, y2, conf, cls))
+                    # Fallback: add all detections
+                    fallback_detections.append((x1, y1, x2, y2, conf, cls))
+            # Use detections containing center if any, else fallback to all
+            used_detections = detections if detections else fallback_detections
+            best_idx = None
+            if used_detections:
+                confs = [d[4] for d in used_detections]
+                idx_max = confs.index(max(confs))
+                best_det = used_detections[idx_max]
+                if best_det[4] > best_conf:
+                    best_conf = best_det[4]
+                    best_detection = best_det[5]
+                best_idx = idx_max
+            annotated = draw_annotations(img.copy(), used_detections, best_idx)
+            annotated_images.append((annotated, used_detections, best_idx))
             analysed_images += 1
-
-
-        return best_conf, best_detection, analysed_images
+        return best_conf, best_detection, analysed_images, annotated_images
 
    
-    response_conf, response_detection, analysed_image_count = get_best_detection(response)
+
+    response_conf, response_detection, analysed_image_count, annotated_images = analyze_images(response)
 
     if analysed_image_count == 0:
         is_correct = False
@@ -142,15 +151,14 @@ def evaluation_function(
     target_text = f'Target component is {target_class if target_class else "unknown (can be specified in 'target' param)"}.'
     result_text = f'Detected component is {f"{response_detection} ({round(response_conf,2)})" if response_detection else "unknown"}.'
 
-    feedback_items = []
 
-    try:
-        # TODO: Update this with the image annotation instead of the original image
-        image_response = requests.get(response[0]["url"])
-        img = Image.open(io.BytesIO(image_response.content))
-        feedback_items.append(('Feedback Image', f'{upload_image(img, 'eduvision')} <br>'))
-    except ImageUploadError as e:
-        print("Failed to upload image feedback", e)
+    feedback_items = []
+    # Upload all annotated images
+    for idx, (img, detections, best_idx) in enumerate(annotated_images):
+        try:
+            feedback_items.append((f'Feedback Image [{idx}]', f'{upload_image(img, "eduvision")} <br>'))
+        except ImageUploadError as e:
+            print(f"Failed to upload image feedback {idx}", e)
 
 
     show_target = params.get("show_target", True)
