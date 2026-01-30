@@ -71,22 +71,45 @@ def evaluation_function(
 
     def draw_annotations(img, detections, best_idx=None):
         draw = ImageDraw.Draw(img)
+    
         try:
             font = ImageFont.truetype("arial.ttf", 18)
         except:
             font = ImageFont.load_default()
+    
         for i, det in enumerate(detections):
             x1, y1, x2, y2, conf, cls = det
-            color = get_class_color(cls)
+    
+            # upewniamy się że współrzędne są int
+            x1, y1, x2, y2 = map(int, (x1, y1, x2, y2))
+    
+            color = get_class_color(str(cls))
             width = 4 if i == best_idx else 2
             outline = color if i != best_idx else (255, 0, 0)
+    
             draw.rectangle([x1, y1, x2, y2], outline=outline, width=width)
+    
             label = f"{cls} {conf:.2f}"
-            text_size = draw.textsize(label, font=font)
-            draw.rectangle([x1, y1 - text_size[1], x1 + text_size[0], y1], fill=outline)
-            draw.text((x1, y1 - text_size[1]), label, fill=(255,255,255), font=font)
+    
+            # ✅ NOWY SPOSÓB
+            bbox = draw.textbbox((x1, y1), label, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+    
+            draw.rectangle(
+                [x1, y1 - text_height, x1 + text_width, y1],
+                fill=outline
+            )
+    
+            draw.text(
+                (x1, y1 - text_height),
+                label,
+                fill=(255, 255, 255),
+                font=font
+            )
+    
         return img
-
+    
     def analyze_images(images):
         best_detection = None
         best_conf = 0.0
@@ -125,9 +148,9 @@ def evaluation_function(
                     best_conf = best_det[4]
                     best_detection = best_det[5]
                 best_idx = idx_max
-            #annotated = draw_annotations(img.copy(), used_detections, best_idx)
-            #annotated_images.append((annotated, used_detections, best_idx))
-            #analysed_images += 1
+            annotated = draw_annotations(img.copy(), used_detections, best_idx)
+            annotated_images.append((annotated, used_detections, best_idx))
+            analysed_images += 1
         return best_conf, best_detection, analysed_images, annotated_images
 
    
