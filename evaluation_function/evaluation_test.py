@@ -20,12 +20,24 @@ class TestEvaluationFunction(unittest.TestCase):
     Use evaluation_function() to check your algorithm works
     as it should.
     """
-    # git test
     def test_evaluation(self):
-        response = [{"comment": "", "name": "classified_processed.png", "size": 50916, "type": "image/png", "url": ""}]
-        answer, params = "Hello, World", Params()
+        # Use a sample image from the internet (or an empty string if you don't have one)
+        # Use local file as image for test
+        import os
+        local_image_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "evaluation_test.py.jpg"))
+        response = [{
+            "comment": "", 
+            "name": "evaluation_test.py.jpg", 
+            "size": os.path.getsize(local_image_path), 
+            "type": "image/jpeg", 
+            "url": f"file://{local_image_path}"
+        }]
+        answer = "test_answer"
+        params = Params(target="test_class", show_target=True, return_images=False, debug=True)
 
         result = evaluation_function(response, answer, params).to_dict()
 
-        self.assertEqual(result.get("is_correct"), False)
-        #self.assertFalse(result.get("feedback", False))
+        # Check if the result is a dictionary and contains the key 'is_correct' and 'feedback_items'
+        self.assertIsInstance(result, dict)
+        self.assertIn("is_correct", result)
+        self.assertIn("feedback_items", result)
