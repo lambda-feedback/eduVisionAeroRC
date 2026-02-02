@@ -40,4 +40,4 @@ class TestEvaluationFunction(unittest.TestCase):
         # Check if the result is a dictionary and contains the key 'is_correct' and 'feedback_items'
         self.assertIsInstance(result, dict)
         self.assertIn("is_correct", result)
-        self.assertIn("feedback_items", result)
+        self.assertIn("feedback", result)
