@@ -76,6 +76,10 @@ def evaluation_function(
         if img_cv.shape[2] == 4:
             img_cv = cv2.cvtColor(img_cv, cv2.COLOR_RGBA2RGB)
         img_cv = cv2.cvtColor(img_cv, cv2.COLOR_RGB2BGR)
+        h, w = img_cv.shape[:2]
+        # Draw center dot
+        center_x, center_y = w // 2, h // 2
+        cv2.circle(img_cv, (center_x, center_y), 7, (0, 255, 255), -1)
         for i, det in enumerate(detections):
             x1, y1, x2, y2, conf, cls = det
             x1, y1, x2, y2 = map(int, (x1, y1, x2, y2))
@@ -95,6 +99,19 @@ def evaluation_function(
             y1_lbl = max(y1 - lbl_h, 0)
             cv2.rectangle(img_cv, (x1, y1_lbl), (x1 + lbl_w, y1), outline, thickness=-1)
             cv2.putText(img_cv, label, (x1 + lbl_margin, y1 - lbl_margin), font, font_scale, (255, 255, 255), font_thickness, lineType=cv2.LINE_AA)
+            # Draw a star in the top-left corner of the best bbox
+            if i == best_idx:
+                # Simple 5-point star
+                star_center = (x1 + 18, y1_lbl + 18)
+                star_radius = 14
+                pts = []
+                for j in range(5):
+                    angle = j * 2 * np.pi / 5 - np.pi / 2
+                    x = int(star_center[0] + star_radius * np.cos(angle))
+                    y = int(star_center[1] + star_radius * np.sin(angle))
+                    pts.append((x, y))
+                for j in range(5):
+                    cv2.line(img_cv, pts[j], pts[(j+2)%5], (0,255,255), 3)
         img_annotated = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
         return Image.fromarray(img_annotated)
     
@@ -131,7 +148,7 @@ def evaluation_function(
                         detections.append((x1, y1, x2, y2, conf, cls))
                     # Fallback: add all detections
                     fallback_detections.append((x1, y1, x2, y2, conf, cls))
-            # Use detections containing center if any, else fallback to all
+            # Pick best_idx using detections if not empty, else fallback_detections
             used_detections = detections if detections else fallback_detections
             best_idx = None
             if used_detections:
@@ -141,9 +158,23 @@ def evaluation_function(
                 if best_det[4] > best_conf:
                     best_conf = best_det[4]
                     best_detection = best_det[5]
-                best_idx = idx_max
-            annotated = draw_annotations_cv2(img.copy(), used_detections, best_idx)
-            annotated_images.append((annotated, used_detections, best_idx))
+                # Find the index of the best detection in fallback_detections for annotation
+                if detections:
+                    # Map best_idx from detections to fallback_detections
+                    best_box = used_detections[idx_max][:5]  # (x1, y1, x2, y2, conf)
+                    for j, det in enumerate(fallback_detections):
+                        if all(np.isclose(det[k], best_box[k]) for k in range(5)):
+                            best_idx_fallback = j
+                            break
+                    else:
+                        best_idx_fallback = None
+                else:
+                    best_idx_fallback = idx_max
+            else:
+                best_idx_fallback = None
+            # Always annotate all fallback_detections
+            annotated = draw_annotations_cv2(img.copy(), fallback_detections, best_idx_fallback)
+            annotated_images.append((annotated, fallback_detections, best_idx_fallback))
             analysed_images += 1
         return best_conf, best_detection, analysed_images, annotated_images
 
