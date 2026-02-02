@@ -99,11 +99,13 @@ def evaluation_function(
             y1_lbl = max(y1 - lbl_h, 0)
             cv2.rectangle(img_cv, (x1, y1_lbl), (x1 + lbl_w, y1), outline, thickness=-1)
             cv2.putText(img_cv, label, (x1 + lbl_margin, y1 - lbl_margin), font, font_scale, (255, 255, 255), font_thickness, lineType=cv2.LINE_AA)
-            # Draw a star in the top-left corner of the best bbox
+            # Draw a star in the top-right corner inside the best bbox
             if i == best_idx:
                 # Simple 5-point star
-                star_center = (x1 + 18, y1_lbl + 18)
+                margin = 6
                 star_radius = 14
+                # Place star center inside the top-right corner
+                star_center = (x2 - margin - star_radius, y1 + margin + star_radius)
                 pts = []
                 for j in range(5):
                     angle = j * 2 * np.pi / 5 - np.pi / 2
