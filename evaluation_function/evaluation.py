@@ -86,7 +86,7 @@ def evaluation_function(
             cv2.rectangle(img_cv, (x1, y1), (x2, y2), outline, thickness)
             label = f"{cls} : {conf:.2f}"
             font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 0.8
+            font_scale = 1.2
             font_thickness = 2
             lbl_margin = 4
             (lbl_w, lbl_h), baseline = cv2.getTextSize(label, font, font_scale, font_thickness)
