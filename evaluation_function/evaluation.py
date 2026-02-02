@@ -105,9 +105,15 @@ def evaluation_function(
         annotated_images = []
         for idx, image in enumerate(images):
             try:
-                image_response = requests.get(image["url"])
-                img = Image.open(io.BytesIO(image_response.content)).convert("RGB")
-            except RequestException as e:
+                url = image["url"]
+                if url.startswith("file://"):
+                    local_path = url[7:]
+                    with open(local_path, "rb") as f:
+                        img = Image.open(f).convert("RGB")
+                else:
+                    image_response = requests.get(url)
+                    img = Image.open(io.BytesIO(image_response.content)).convert("RGB")
+            except Exception as e:
                 print('Failed to get image: ', e)
                 continue
             results = model.predict(img, conf=0.5)
