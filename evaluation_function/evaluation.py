@@ -9,6 +9,8 @@ import re
 import requests
 from requests.exceptions import RequestException
 import random
+import numpy as np
+import cv2
 
 _model_cache = None
 
@@ -69,46 +71,32 @@ def evaluation_function(
         random.seed(hash(class_name) % 10000)
         return tuple(random.choices(range(50, 256), k=3))
 
-    def draw_annotations(img, detections, best_idx=None):
-        draw = ImageDraw.Draw(img)
-    
-        try:
-            font = ImageFont.truetype("arial.ttf", 32)
-        except:
-            font = ImageFont.load_default()
-    
+    def draw_annotations_cv2(img, detections, best_idx=None):
+        img_cv = np.array(img)
+        if img_cv.shape[2] == 4:
+            img_cv = cv2.cvtColor(img_cv, cv2.COLOR_RGBA2RGB)
+        img_cv = cv2.cvtColor(img_cv, cv2.COLOR_RGB2BGR)
         for i, det in enumerate(detections):
             x1, y1, x2, y2, conf, cls = det
-    
-            # upewniamy się że współrzędne są int
             x1, y1, x2, y2 = map(int, (x1, y1, x2, y2))
-    
             color = get_class_color(str(cls))
-            width = 4 if i == best_idx else 2
-            outline = color if i != best_idx else (255, 0, 0)
-    
-            draw.rectangle([x1, y1, x2, y2], outline=outline, width=width)
-    
-            label = f"{cls} {conf:.2f}"
-    
-            # ✅ NOWY SPOSÓB
-            bbox = draw.textbbox((x1, y1), label, font=font)
-            text_width = bbox[2] - bbox[0]
-            text_height = bbox[3] - bbox[1]
-    
-            draw.rectangle(
-                [x1, y1 - text_height, x1 + text_width, y1],
-                fill=outline
-            )
-    
-            draw.text(
-                (x1, y1 - text_height),
-                label,
-                fill=(255, 255, 255),
-                font=font
-            )
-    
-        return img
+            color_bgr = (int(color[2]), int(color[1]), int(color[0]))
+            outline = (0, 0, 255) if i == best_idx else color_bgr
+            thickness = 3 if i == best_idx else 2
+            cv2.rectangle(img_cv, (x1, y1), (x2, y2), outline, thickness)
+            label = f"{cls} : {conf:.2f}"
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.8
+            font_thickness = 2
+            lbl_margin = 4
+            (lbl_w, lbl_h), baseline = cv2.getTextSize(label, font, font_scale, font_thickness)
+            lbl_w += 2 * lbl_margin
+            lbl_h += 2 * lbl_margin
+            y1_lbl = max(y1 - lbl_h, 0)
+            cv2.rectangle(img_cv, (x1, y1_lbl), (x1 + lbl_w, y1), outline, thickness=-1)
+            cv2.putText(img_cv, label, (x1 + lbl_margin, y1 - lbl_margin), font, font_scale, (255, 255, 255), font_thickness, lineType=cv2.LINE_AA)
+        img_annotated = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+        return Image.fromarray(img_annotated)
     
     def analyze_images(images):
         best_detection = None
@@ -148,7 +136,7 @@ def evaluation_function(
                     best_conf = best_det[4]
                     best_detection = best_det[5]
                 best_idx = idx_max
-            annotated = draw_annotations(img.copy(), used_detections, best_idx)
+            annotated = draw_annotations_cv2(img.copy(), used_detections, best_idx)
             annotated_images.append((annotated, used_detections, best_idx))
             analysed_images += 1
         return best_conf, best_detection, analysed_images, annotated_images
