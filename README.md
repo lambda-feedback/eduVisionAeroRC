@@ -1,238 +1,122 @@
-# Python Evaluation Function
 
-This repository contains the boilerplate code needed to create a containerized evaluation function written in Python.
+# Aero RC Image Evaluation Function
 
-## Quickstart
+This repository contains an advanced evaluation function designed for the Aero RC project. Its main purpose is to automatically analyze and evaluate image-based student responses using a YOLO object detection model. The function is tailored for tasks where students upload images as answers, and the evaluation is based on the detection and classification of objects/components within those images.
 
-This chapter helps you to quickly set up a new Python evaluation function using this template repository.
+## Purpose
 
-> [!NOTE]
-> After setting up the evaluation function, delete this chapter from the `README.md` file, and add your own documentation.
+This evaluation function is intended to:
+- Automatically assess student responses that are submitted as images.
+- Detect and classify objects/components in the uploaded images using a pre-trained YOLO model.
+- Compare detected objects with the expected (target) class and provide detailed, visual feedback.
+- Return annotated images, feedback, and correctness information for use in educational platforms.
 
-#### 1. Create a new repository
+**Important:** This evaluation function is designed to work exclusively with image inputs. It will not function correctly with text or other data types.
 
-- In GitHub, choose `Use this template` > `Create a new repository` in the repository toolbar.
+## How It Works
 
-- Choose the owner, and pick a name for the new repository.
+1. **Image Input:** The function expects the `response` argument to be a list of dictionaries, each containing a URL to an image (e.g., `{ "url": "https://..." }`).
+2. **Model Loading:** On first use, the function loads a YOLO model from the local `model.pt` file (cached for performance).
+3. **Detection:** For each image, the model predicts bounding boxes, classes, and confidence scores. The function prioritizes detections that contain the image center, but will fall back to the most confident detection if needed.
+4. **Annotation:** Detected objects are drawn on the images with colored bounding boxes and readable labels. The best detection is highlighted.
+5. **Comparison:** The detected class with the highest confidence is compared to the expected target class (provided in parameters).
+6. **Feedback:** The function returns:
+   - Whether the response is correct (`is_correct`)
+   - Annotated feedback images (optional)
+   - Textual feedback about the detected and target classes
+   - Debug information (optional)
 
-  > [!IMPORTANT]
-  > If you want to deploy the evaluation function to Lambda Feedback, make sure to choose the Lambda Feedback organization as the owner.
+## Parameters
 
-- Set the visibility to `Public` or `Private`.
+The function accepts the following parameters via the `params` argument:
 
-  > [!IMPORTANT]
-  > If you want to use GitHub [deployment protection rules](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-protection-rules), make sure to set the visibility to `Public`.
+| Parameter        | Type    | Default | Description |
+|------------------|---------|---------|-------------|
+| `target`         | string  | None    | The expected class/component to be detected in the image. |
+| `show_target`    | bool    | True    | Whether to include information about the target class in the feedback. |
+| `return_images`  | bool    | True    | Whether to return annotated feedback images. Set to `False` to omit images from feedback. |
+| `debug`          | bool    | False   | If `True`, includes extra debug information in the feedback (such as the original uploaded image URL and image count). |
 
-- Click on `Create repository`.
+## Data Format
 
-#### 2. Clone the new repository
+### Response (Student Submission)
+Should be a list of dictionaries, each with a `url` key pointing to an image:
 
-Clone the new repository to your local machine using the following command:
-
-```bash
-git clone <repository-url>
+```json
+[
+  { "url": "https://example.com/image1.jpg" },
+  { "url": "https://example.com/image2.jpg" }
+]
 ```
 
-#### 3. Configure the evaluation function
+### Answer (Reference Data)
+Not directly used for image analysis, but may contain reference images or metadata for future extensions.
 
-When deploying to Lambda Feedback, set the evaluation function name in the `config.json` file. Read the [Deploy to Lambda Feedback](#deploy-to-lambda-feedback) section for more information.
-
-#### 4. Develop the evaluation function
-
-You're ready to start developing your evaluation function. Head over to the [Development](#development) section to learn more.
-
-#### 5. Update the README
-
-In the `README.md` file, change the title and description so it fits the purpose of your evaluation function.
-
-Also, don't forget to delete the Quickstart chapter from the `README.md` file after you've completed these steps.
-
-## Usage
-
-You can run the evaluation function either using [the pre-built Docker image](#run-the-docker-image) or build and run [the binary executable](#build-and-run-the-binary).
-
-### Run the Docker Image
-
-The pre-built Docker image comes with [Shimmy](https://github.com/lambda-feedback/shimmy) installed.
-
-> [!TIP]
-> Shimmy is a small application that listens for incoming HTTP requests, validates the incoming data and forwards it to the underlying evaluation function. Learn more about Shimmy in the [Documentation](https://github.com/lambda-feedback/shimmy).
-
-The pre-built Docker image is available on the GitHub Container Registry. You can run the image using the following command:
-
-```bash
-docker run -p 8080:8080 ghcr.io/lambda-feedback/evaluation-function-boilerplate-python:latest
-```
-
-### Run the Script
-
-You can choose between running the Python evaluation function itself, ore using Shimmy to run the function.
-
-**Raw Mode**
-
-Use the following command to run the evaluation function directly:
-
-```bash
-python -m evaluation_function.main
-```
-
-This will run the evaluation function using the input data from `request.json` and write the output to `response.json`.
-
-**Shimmy**
-
-To have a more user-friendly experience, you can use [Shimmy](https://github.com/lambda-feedback/shimmy) to run the evaluation function.
-
-To run the evaluation function using Shimmy, use the following command:
-
-```bash
-shimmy -c "python" -a "-m" -a "evaluation_function.main" -i ipc
-```
-
-## Development
-
-### Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/)
-- [Python](https://www.python.org)
-
-### Repository Structure
-
-```bash
-.github/workflows/
-    build.yml                           # builds the public evaluation function image
-    deploy.yml                          # deploys the evaluation function to Lambda Feedback
-
-evaluation_function/main.py             # evaluation function entrypoint
-evaluation_function/evaluation.py       # evaluation function implementation
-evaluation_function/evaluation_test.py  # evaluation function tests
-evaluation_function/preview.py          # evaluation function preview
-evaluation_function/preview_test.py     # evaluation function preview tests
-
-config.json                             # evaluation function deployment configuration file
-```
-
-### Development Workflow
-
-In its most basic form, the development workflow consists of writing the evaluation function in the `evaluation_function.wl` file and testing it locally. As long as the evaluation function adheres to the Evaluation Function API, a development workflow which incorporates using Shimmy is not necessary.
-
-Testing the evaluation function can be done by running the `dev.py` script using the Python interpreter like so:
-
-```bash
-python -m evaluation_function.dev <response> <answer>
-```
-
-> [!NOTE]
-> Specify the `response` and `answer` as command-line arguments.
-
-### Building the Docker Image
-
-To build the Docker image, run the following command:
-
-```bash
-docker build -t my-python-evaluation-function .
-```
-
-### Running the Docker Image
-
-To run the Docker image, use the following command:
-
-```bash
-docker run -it --rm -p 8080:8080 my-python-evaluation-function
-```
-
-This will start the evaluation function and expose it on port `8080`.
-
-## Deployment
-
-This section guides you through the deployment process of the evaluation function. If you want to deploy the evaluation function to Lambda Feedback, follow the steps in the [Lambda Feedback](#deploy-to-lambda-feedback) section. Otherwise, you can deploy the evaluation function to other platforms using the [Other Platforms](#deploy-to-other-platforms) section.
-
-### Deploy to Lambda Feedback
-
-Deploying the evaluation function to Lambda Feedback is simple and straightforward, as long as the repository is within the [Lambda Feedback organization](https://github.com/lambda-feedback).
-
-After configuring the repository, a [GitHub Actions workflow](.github/workflows/deploy.yml) will automatically build and deploy the evaluation function to Lambda Feedback as soon as changes are pushed to the main branch of the repository.
-
-**Configuration**
-
-The deployment configuration is stored in the `config.json` file. Choose a unique name for the evaluation function and set the `EvaluationFunctionName` field in [`config.json`](config.json).
-
-> [!IMPORTANT]
-> The evaluation function name must be unique within the Lambda Feedback organization, and must be in `lowerCamelCase`. You can find a example configuration below:
+### Params (Evaluation Parameters)
+Example:
 
 ```json
 {
-  "EvaluationFunctionName": "compareStringsWithPython"
+  "target": "servo",
+  "show_target": true,
+  "return_images": true,
+  "debug": false
 }
 ```
 
-### Deploy to other Platforms
+## Output
 
-If you want to deploy the evaluation function to other platforms, you can use the Docker image to deploy the evaluation function.
+The function returns a dictionary with the following structure:
 
-Please refer to the deployment documentation of the platform you want to deploy the evaluation function to.
+| Key             | Type    | Description |
+|-----------------|---------|-------------|
+| `is_correct`    | bool    | Whether the detected class matches the target class. |
+| `feedback_items`| list    | List of feedback tuples: (label, value). May include annotated images, target/result info, and debug info. |
 
-If you need help with the deployment, feel free to reach out to the Lambda Feedback team by creating an issue in the template repository.
+### Example Output
 
-## FAQ
-
-### Pull Changes from the Template Repository
-
-If you want to pull changes from the template repository to your repository, follow these steps:
-
-1. Add the template repository as a remote:
-
-```bash
-git remote add template https://github.com/lambda-feedback/evaluation-function-boilerplate-python.git
+```json
+{
+  "is_correct": true,
+  "feedback_items": [
+    ["Feedback Image [0]", "<img_url> <br>"],
+    ["Target", "Target component is servo."],
+    ["Result", "Detected component is servo (0.98)."],
+    ["Uploaded Image [0]", "![Test Image](https://example.com/image1.jpg)"],
+    ["Count of Images", "Image Count: 1"]
+  ]
+}
 ```
 
-2. Fetch changes from all remotes:
+## Functionality Details
 
-```bash
-git fetch --all
-```
+- **YOLO Model:** Uses the Ultralytics YOLO implementation. The model file (`model.pt`) must be present in the `evaluation_function` directory.
+- **Image Annotation:** Bounding boxes and class labels are drawn on the images. The label font size is large for readability. The best detection is highlighted in red.
+- **Image Upload:** Annotated images are uploaded and returned as URLs in the feedback (unless `return_images` is set to `False`).
+- **Robustness:** If no image is provided, the function returns feedback requesting at least one image.
+- **Debug Mode:** If `debug` is enabled, the function includes the original image URL and the number of analyzed images in the feedback.
 
-3. Merge changes from the template repository:
+## Usage Notes
 
-```bash
-git merge template/main --allow-unrelated-histories
-```
-
-> [!WARNING]
-> Make sure to resolve any conflicts and keep the changes you want to keep.
+- **Image-Only:** This evaluation function is designed for image-based tasks. Submitting non-image data will result in errors or no evaluation.
+- **Aero RC Project:** This function was developed specifically for the Aero RC educational project, but can be adapted for other image-based evaluation scenarios.
+- **Extensibility:** The function can be extended to support more advanced feedback, additional parameters, or other object detection models as needed.
 
 ## Troubleshooting
 
-### Containerized Evaluation Function Fails to Start
+- Ensure the `model.pt` file is present in the `evaluation_function` directory.
+- All required Python packages (see `pyproject.toml`) must be installed.
+- If annotated images are not returned, check the `return_images` parameter.
+- For debugging, set `debug` to `true` in the parameters.
 
-If your evaluation function is working fine when run locally, but not when containerized, there is much more to consider. Here are some common issues and solution approaches:
+## File Structure
 
-**Run-time dependencies**
+- `evaluation_function/evaluation.py` – Main evaluation logic
+- `evaluation_function/model.pt` – YOLO model file
+- `evaluation_function/preview.py` – Preview utilities
+- `evaluation_function/evaluation_test.py` – Tests
+- `config.json` – Deployment configuration
 
-Make sure that all run-time dependencies are installed in the Docker image.
+## Contact
 
-- Python packages: Make sure to add the dependency to the `pyproject.toml` file, and run `poetry install` in the Dockerfile.
-- System packages: If you need to install system packages, add the installation command to the Dockerfile.
-- ML models: If your evaluation function depends on ML models, make sure to include them in the Docker image.
-- Data files: If your evaluation function depends on data files, make sure to include them in the Docker image.
-
-**Architecture**
-
-Some package may not be compatible with the architecture of the Docker image. Make sure to use the correct platform when building and running the Docker image.
-
-E.g. to build a Docker image for the `linux/x86_64` platform, use the following command:
-
-```bash
-docker build --platform=linux/x86_64 .
-```
-
-**Verify Standalone Execution**
-
-If requests are timing out, it might be due to the evaluation function not being able to run. Make sure that the evaluation function can be run as a standalone script. This will help you to identify issues that are specific to the containerized environment.
-
-To run just the evaluation function as a standalone script, without using Shimmy, use the following command:
-
-```bash
-docker run -it --rm my-python-evaluation-function python -m evaluation_function.main
-```
-
-If the command starts without any errors, the evaluation function is working correctly. If not, you will see the error message in the console.
+For questions or support, contact the Aero RC project maintainers or open an issue in this repository.
