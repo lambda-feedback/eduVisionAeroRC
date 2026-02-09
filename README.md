@@ -39,15 +39,6 @@ The function accepts the following parameters via the `params` argument:
 
 ## Data Format
 
-### Response (Student Submission)
-Should be a list of dictionaries, each with a `url` key pointing to an image:
-
-```json
-[
-  { "url": "https://example.com/image1.jpg" },
-  { "url": "https://example.com/image2.jpg" }
-]
-```
 
 ### Answer (Reference Data)
 Not directly used for image analysis, but may contain reference images or metadata for future extensions.
