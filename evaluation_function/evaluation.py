@@ -231,6 +231,9 @@ def evaluation_function(
 
 
     show_target = params.get("show_target", True)
+    # if show_target somehow came in as a string, convert to bool
+    if isinstance(show_target, str):
+        show_target = show_target.strip().lower() in ("true", "1", "yes")
     if show_target:
         feedback_items.append(('Target', target_text))
     feedback_items.append(('Result', result_text))
@@ -247,8 +250,8 @@ def evaluation_function(
         feedback_items.append(('Count of Images', f'Image Count: {analysed_image_count}'))
 
    # If show_target == False, only show Result
-    if not show_target:
-        feedback_items = [('Result', result_text)]
+    #if not show_target:
+    #    feedback_items = [('Result', result_text)]
 
     return Result(
         is_correct=is_correct,
