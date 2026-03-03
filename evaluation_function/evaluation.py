@@ -246,6 +246,21 @@ def evaluation_function(
         except Exception as e:
             print("Failed to print response structure", e)
 
+        # also check if YOLO can use GPU (torch.cuda availability)
+        try:
+            import torch
+            gpu_available = torch.cuda.is_available()
+        except ImportError:
+            gpu_available = "Error checking GPU availability"
+        # sometimes the model itself has a .device attribute
+        try:
+            model_device = getattr(_model_cache, 'device', None)
+            if hasattr(model_device, 'type'):
+                model_device = model_device.type
+        except Exception:
+            model_device = None
+        print(f"DEBUG GPU available: {gpu_available}, model.device: {model_device}")
+
         feedback_items.append(('Uploaded Image [0]', f'![Test Image]({response[0]['url']})'))
         feedback_items.append(('Count of Images', f'Image Count: {analysed_image_count}'))
 
