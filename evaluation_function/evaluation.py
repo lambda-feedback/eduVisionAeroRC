@@ -212,33 +212,22 @@ def evaluation_function(
         #         feedback_items.append((f'Feedback Image [{idx}]', f'{upload_image(img, "eduvision")} <br>'))
         #     except ImageUploadError as e:
         #         print(f"Failed to upload image feedback {idx}", e)
-
-        #for idx, (img, detections, best_idx) in enumerate(annotated_images):
-        #    try:
-        #        img_url = upload_image(img, "eduvision")
-        #        # Extract original filename from the user's uploaded image URL (from response)
-        #        from urllib.parse import urlparse, unquote
-        #        original_url = response[idx]["url"] if idx < len(response) and "url" in response[idx] else None
-        #        if original_url:
-        #            parsed_orig = urlparse(original_url)
-        #            orig_filename = os.path.basename(parsed_orig.path)
-        #            orig_filename = unquote(orig_filename) if orig_filename else f"image_{idx}.jpg"
-        #        else:
-        #            orig_filename = f"image_{idx}.jpg"
-        #        link_html = f'<a href="{img_url}" target="_blank">{orig_filename}</a>'
-        #        feedback_items.append((f'Feedback Image [{idx}]', link_html))
-        #    except ImageUploadError as e:
-        #        print(f"Failed to upload image feedback {idx}", e)
-
-
-        
-
         for idx, (img, detections, best_idx) in enumerate(annotated_images):
             try:
-                # Upload the processed (annotated) image and append as feedback
-                feedback_items.append((f'Feedback Image [{idx}]', f"{upload_image(img, 'eduvision')} <br>"))
+                img_url = upload_image(img, "eduvision")
+                # Extract original filename from the user's uploaded image URL (from response)
+                from urllib.parse import urlparse, unquote
+                original_url = response[idx]["url"] if idx < len(response) and "url" in response[idx] else None
+                if original_url:
+                    parsed_orig = urlparse(original_url)
+                    orig_filename = os.path.basename(parsed_orig.path)
+                    orig_filename = unquote(orig_filename) if orig_filename else f"image_{idx}.jpg"
+                else:
+                    orig_filename = f"image_{idx}.jpg"
+                link_html = f'<a href="{img_url}" target="_blank">{orig_filename}</a>'
+                feedback_items.append((f'Feedback Image [{idx}]', link_html))
             except ImageUploadError as e:
-                print("Failed to upload image feedback", e)
+                print(f"Failed to upload image feedback {idx}", e)
 
 
     show_target = params.get("show_target", True)
@@ -247,6 +236,13 @@ def evaluation_function(
     feedback_items.append(('Result', result_text))
 
     if params.get('debug', False):
+        # print response structure for debugging purposes
+        try:
+            # use repr to avoid issues with binary data
+            print("DEBUG response structure:", repr(response))
+        except Exception as e:
+            print("Failed to print response structure", e)
+
         feedback_items.append(('Uploaded Image [0]', f'![Test Image]({response[0]['url']})'))
         feedback_items.append(('Count of Images', f'Image Count: {analysed_image_count}'))
 
