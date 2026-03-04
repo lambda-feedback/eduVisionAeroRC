@@ -242,8 +242,10 @@ def evaluation_function(
         # print response structure for debugging purposes
         try:
             # use repr to avoid issues with binary data
+            feedback_items.append(("DEBUG response structure:", repr(response)))
             print("DEBUG response structure:", repr(response))
         except Exception as e:
+            feedback_items.append(("Failed to print response structure", e))
             print("Failed to print response structure", e)
 
         # also check if YOLO can use GPU (torch.cuda availability)
@@ -260,6 +262,7 @@ def evaluation_function(
         except Exception:
             model_device = None
         print(f"DEBUG GPU available: {gpu_available}, model.device: {model_device}")
+        feedback_items.append(("DEBUG GPU available", f"{gpu_available}, {model_device}"))
 
         feedback_items.append(('Uploaded Image [0]', f'![Test Image]({response[0]['url']})'))
         feedback_items.append(('Count of Images', f'Image Count: {analysed_image_count}'))
