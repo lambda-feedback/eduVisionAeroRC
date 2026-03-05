@@ -292,7 +292,7 @@ def evaluation_function(
 
         combined = f"{link_html}\n{text}"
 
-        append_feedback(f"Image [{idx}]", f"--- Image [{idx}] ---" + combined)
+        append_feedback(f"Image [{idx}]", f"--- Image [{idx}] ---\n" + combined)
 
     is_correct = response_detection == target_class and response_detection is not None
 
