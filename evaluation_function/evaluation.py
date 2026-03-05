@@ -232,7 +232,8 @@ def evaluation_function(
 
         append_feedback(
             "Target",
-            f"Target component:\n{target_class}",
+            f"--- Target ---\n"
+            f"Target component: {target_class}",
         )
 
     if response_detection and len(response) > 1:
@@ -245,9 +246,9 @@ def evaluation_function(
 
         append_feedback(
             "Overall Best",
-            f"Best detection across all images:\n"
-            f"{response_detection} ({response_conf:.2f})\n"
+            f"--- Best detection across all images ---\n"
             f"Image: {overall_name}\n"
+            f"Detected Component: {response_detection} ({response_conf:.2f})\n"
             f"Source: {origin}",
         )
 
@@ -260,22 +261,22 @@ def evaluation_function(
             try:
 
                 url = upload_image(img, "eduvision")
-                link_html = f'<a href="{url}" target="_blank">{orig_name}</a>'
+                link_html = f'Image: <a href="{url}" target="_blank">{orig_name}\nLink To Annotation: {url}</a>'
 
             except:
 
-                link_html = f"<b>{orig_name}</b> (upload failed)"
+                link_html = f"<b>Image: {orig_name}</b>\nLink To Annotation: (upload failed)"
 
         else:
 
-            link_html = f"<b>{orig_name}</b>"
+            link_html = f"<b>Image: {orig_name}</b>"
 
         info = per_image_best[idx]
         det = info["best_det"]
 
         if det is None:
 
-            text = "no component detected"
+            text = "No Component Detected"
 
         else:
 
@@ -284,14 +285,14 @@ def evaluation_function(
             origin = "center region" if info["chose_from_center"] else "full image"
 
             text = (
-                f"detected component: {cls}\n"
-                f"confidence: {conf:.2f}\n"
-                f"source: {origin}"
+                f"Detected Component: {cls}\n"
+                f"Confidence: {conf:.2f}\n"
+                f"Source: {origin}"
             )
 
         combined = f"{link_html}\n{text}"
 
-        append_feedback(f"Image [{idx}]", combined)
+        append_feedback(f"Image [{idx}]", f"--- Image [{idx}] ---" + combined)
 
     is_correct = response_detection == target_class and response_detection is not None
 
