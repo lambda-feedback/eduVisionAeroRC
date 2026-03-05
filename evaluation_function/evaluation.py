@@ -28,7 +28,7 @@ def evaluation_function(
 
     draw_images = params.get("draw_images", True)
 
-    # Cache YOLO model
+    ## Cache YOLO model
     if _model_cache is None:
         model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model.pt")
         _model_cache = YOLO(model_path)
