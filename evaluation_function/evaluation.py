@@ -28,7 +28,7 @@ def evaluation_function(
 
     draw_images = params.get("draw_images", True)
 
-    ### Cache YOLO model
+    # Cache YOLO model
     if _model_cache is None:
         model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model.pt")
         _model_cache = YOLO(model_path)
@@ -39,19 +39,15 @@ def evaluation_function(
 
     print("Target class:", target_class)
 
-
-    # helper for feedback formatting
     feedback_items = []
 
     def append_feedback(title, text):
         feedback_items.append((title, text + "\n"))
 
-
     # deterministic colors
     def get_class_color(class_name):
         random.seed(hash(class_name) % 10000)
         return tuple(random.choices(range(50, 256), k=3))
-
 
     def draw_annotations_cv2(img, detections, best_idx=None):
 
@@ -121,7 +117,6 @@ def evaluation_function(
 
         return Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
 
-
     def analyze_images(images, draw_images=True):
 
         best_detection = None
@@ -132,7 +127,6 @@ def evaluation_function(
 
         best_from_center = False
         best_image_idx = None
-
 
         for idx, image in enumerate(images):
 
@@ -160,7 +154,6 @@ def evaluation_function(
 
                 continue
 
-
             results = model.predict(img, conf=0.5)
 
             det_center = []
@@ -168,7 +161,6 @@ def evaluation_function(
 
             w, h = img.size
             cx, cy = w / 2, h / 2
-
 
             for res in results:
 
@@ -184,14 +176,12 @@ def evaluation_function(
                     if x1 <= cx <= x2 and y1 <= cy <= y2:
                         det_center.append((x1, y1, x2, y2, conf, cls))
 
-
             used = det_center if det_center else det_all
 
             chosen_from_center = bool(det_center)
 
             best_det = None
             best_idx_fb = None
-
 
             if used:
 
@@ -211,14 +201,12 @@ def evaluation_function(
 
                     best_image_idx = idx
 
-
                 for k, d in enumerate(det_all):
 
                     if all(np.isclose(d[m], best_det[m]) for m in range(5)):
 
                         best_idx_fb = k
                         break
-
 
             annotated = None
 
@@ -234,7 +222,6 @@ def evaluation_function(
                 }
             )
 
-
         return (
             best_conf,
             best_detection,
@@ -244,7 +231,6 @@ def evaluation_function(
             best_from_center,
             best_image_idx,
         )
-
 
     (
         response_conf,
@@ -256,13 +242,12 @@ def evaluation_function(
         overall_best_image_idx,
     ) = analyze_images(response, draw_images)
 
+    # Show target only if provided
+    if target_class:
 
-    if params.get("show_target", False):
-
-        target_text = f"Target component is {target_class or 'unknown'}."
+        target_text = f"Target component is {target_class}."
 
         append_feedback("Target", target_text)
-
 
     if response_detection:
 
@@ -281,7 +266,6 @@ def evaluation_function(
     else:
 
         append_feedback("Overall Best", "No components detected in any image.")
-
 
     for idx, (img, detections, best_idx) in enumerate(annotated_images):
 
@@ -303,7 +287,6 @@ def evaluation_function(
 
             link_html = f"<b>{orig_name}</b>"
 
-
         info = per_image_best[idx]
 
         det = info["best_det"]
@@ -320,14 +303,11 @@ def evaluation_function(
 
             text = f"detected component: {cls} ({conf:.2f}, from {origin})"
 
-
         combined = f"{link_html} - {text}"
 
         append_feedback(f"Image [{idx}]", combined)
 
-
     is_correct = response_detection == target_class and response_detection is not None
-
 
     return Result(
         is_correct=is_correct,
