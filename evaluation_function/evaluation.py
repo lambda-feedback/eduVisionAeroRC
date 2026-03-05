@@ -28,7 +28,6 @@ def evaluation_function(
 
     draw_images = params.get("draw_images", True)
 
-    # Cache YOLO model
     if _model_cache is None:
         model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model.pt")
         _model_cache = YOLO(model_path)
@@ -42,9 +41,8 @@ def evaluation_function(
     feedback_items = []
 
     def append_feedback(title, text):
-        feedback_items.append((title, text + "\n"))
+        feedback_items.append((title + "\n", text.strip() + "\n\n"))
 
-    # deterministic colors
     def get_class_color(class_name):
         random.seed(hash(class_name) % 10000)
         return tuple(random.choices(range(50, 256), k=3))
@@ -59,7 +57,6 @@ def evaluation_function(
         img_cv = cv2.cvtColor(img_cv, cv2.COLOR_RGB2BGR)
 
         h, w = img_cv.shape[:2]
-
         cx, cy = w // 2, h // 2
 
         cv2.circle(img_cv, (cx, cy), 7, (0, 255, 255), -1)
@@ -97,7 +94,6 @@ def evaluation_function(
 
                 margin = 6
                 star_r = 14
-
                 star_cx = x2 - margin - star_r
                 star_cy = y1 + margin + star_r
 
@@ -151,7 +147,6 @@ def evaluation_function(
                 )
 
                 annotated_images.append((None, [], None))
-
                 continue
 
             results = model.predict(img, conf=0.5)
@@ -168,7 +163,6 @@ def evaluation_function(
 
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
                     conf = float(box.conf[0])
-
                     cls = model.names[int(box.cls[0])]
 
                     det_all.append((x1, y1, x2, y2, conf, cls))
@@ -177,7 +171,6 @@ def evaluation_function(
                         det_center.append((x1, y1, x2, y2, conf, cls))
 
             used = det_center if det_center else det_all
-
             chosen_from_center = bool(det_center)
 
             best_det = None
@@ -186,19 +179,14 @@ def evaluation_function(
             if used:
 
                 confs = [d[4] for d in used]
-
                 bi = confs.index(max(confs))
-
                 best_det = used[bi]
 
                 if best_det[4] > best_conf:
 
                     best_conf = best_det[4]
-
                     best_detection = best_det[5]
-
                     best_from_center = chosen_from_center
-
                     best_image_idx = idx
 
                 for k, d in enumerate(det_all):
@@ -225,7 +213,6 @@ def evaluation_function(
         return (
             best_conf,
             best_detection,
-            len(annotated_images),
             annotated_images,
             per_image_best,
             best_from_center,
@@ -235,21 +222,20 @@ def evaluation_function(
     (
         response_conf,
         response_detection,
-        analysed_image_count,
         annotated_images,
         per_image_best,
         overall_best_from_center,
         overall_best_image_idx,
     ) = analyze_images(response, draw_images)
 
-    # Show target only if provided
     if target_class:
 
-        target_text = f"Target component is {target_class}."
+        append_feedback(
+            "Target",
+            f"Target component:\n{target_class}",
+        )
 
-        append_feedback("Target", target_text)
-
-    if response_detection:
+    if response_detection and len(response) > 1:
 
         origin = "center region" if overall_best_from_center else "full image"
 
@@ -259,13 +245,11 @@ def evaluation_function(
 
         append_feedback(
             "Overall Best",
-            f"Best detection across all images: {response_detection} ({response_conf:.2f}) "
-            f"in image '{overall_name}', chosen from {origin}.",
+            f"Best detection across all images:\n"
+            f"{response_detection} ({response_conf:.2f})\n"
+            f"Image: {overall_name}\n"
+            f"Source: {origin}",
         )
-
-    else:
-
-        append_feedback("Overall Best", "No components detected in any image.")
 
     for idx, (img, detections, best_idx) in enumerate(annotated_images):
 
@@ -276,8 +260,7 @@ def evaluation_function(
             try:
 
                 url = upload_image(img, "eduvision")
-
-                link_html = f'<a href="{url}" target="_blank">{orig_name} ({url})</a>'
+                link_html = f'<a href="{url}" target="_blank">{orig_name}</a>'
 
             except:
 
@@ -288,7 +271,6 @@ def evaluation_function(
             link_html = f"<b>{orig_name}</b>"
 
         info = per_image_best[idx]
-
         det = info["best_det"]
 
         if det is None:
@@ -301,9 +283,13 @@ def evaluation_function(
 
             origin = "center region" if info["chose_from_center"] else "full image"
 
-            text = f"detected component: {cls} ({conf:.2f}, from {origin})"
+            text = (
+                f"detected component: {cls}\n"
+                f"confidence: {conf:.2f}\n"
+                f"source: {origin}"
+            )
 
-        combined = f"{link_html} - {text}"
+        combined = f"{link_html}\n{text}"
 
         append_feedback(f"Image [{idx}]", combined)
 
