@@ -11,7 +11,9 @@ import numpy as np
 import cv2
 
 
-_model_cache = None
+
+# Cache for loaded models by name
+_model_cache = {}
 
 
 def evaluation_function(
@@ -20,6 +22,7 @@ def evaluation_function(
     params: Params,
 ) -> Result:
 
+
     global _model_cache
 
     print("### Answer: ", answer)
@@ -27,12 +30,14 @@ def evaluation_function(
     print("### Params: ", params)
 
     draw_images = params.get("draw_images", True)
+    model_name = params.get("model_name", "model.pt")
 
-    if _model_cache is None:
-        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model.pt")
-        _model_cache = YOLO(model_path)
+    # Use a dict to cache models by name
+    if model_name not in _model_cache:
+        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), model_name)
+        _model_cache[model_name] = YOLO(model_path)
 
-    model = _model_cache
+    model = _model_cache[model_name]
 
     target_class = params.get("target", None)
 
