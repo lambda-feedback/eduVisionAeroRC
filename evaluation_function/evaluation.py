@@ -307,6 +307,11 @@ def evaluation_function(
 
     for idx, (img, detections, best_idx) in enumerate(annotated_images):
 
+        orig_name = response[idx].get("name", f"image_{idx}.jpg")
+
+        # set default link_html
+        link_html = f"<b>Image: {orig_name}</b>"
+
         info = per_image_best[idx]
         det = info["best_det"]
 
@@ -330,8 +335,6 @@ def evaluation_function(
 
         append_feedback(f"Image [{idx}]", f"--- Image [{idx}] ---\n" + combined)
 
-        orig_name = response[idx].get("name", f"image_{idx}.jpg")
-
         if draw_images and img is not None:
 
             upload_start = time.time()
@@ -351,7 +354,6 @@ def evaluation_function(
 
         else:
 
-            link_html = f"<b>Image: {orig_name}</b>"
             upload_times.append(0.0)
 
         
