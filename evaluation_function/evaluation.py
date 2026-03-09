@@ -135,11 +135,16 @@ def evaluation_function(
         annotated_images = []
         per_image_best = []
         prediction_times = []
+        load_times = []
+        process_times = []
+        draw_times = []
 
         best_from_center = False
         best_image_idx = None
 
         for idx, image in enumerate(images):
+
+            load_start = time.time()
 
             try:
 
@@ -157,6 +162,8 @@ def evaluation_function(
 
             except:
 
+                load_times.append(time.time() - load_start)
+
                 per_image_best.append(
                     {"best_det": None, "chose_from_center": False}
                 )
@@ -164,9 +171,13 @@ def evaluation_function(
                 annotated_images.append((None, [], None))
                 continue
 
+            load_times.append(time.time() - load_start)
+
             pred_start = time.time()
             results = model.predict(img, conf=0.5)
             prediction_times.append(time.time() - pred_start)
+
+            process_start = time.time()
 
             det_center = []
             det_all = []
@@ -213,10 +224,16 @@ def evaluation_function(
                         best_idx_fb = k
                         break
 
+            process_times.append(time.time() - process_start)
+
             annotated = None
 
             if draw_images:
+                draw_start = time.time()
                 annotated = draw_annotations_cv2(img.copy(), det_all, best_idx_fb)
+                draw_times.append(time.time() - draw_start)
+            else:
+                draw_times.append(0.0)
 
             annotated_images.append((annotated, det_all, best_idx_fb))
 
@@ -227,7 +244,10 @@ def evaluation_function(
                 }
             )
 
+        avg_load_time = np.mean(load_times) if load_times else 0.0
         avg_prediction_time = np.mean(prediction_times) if prediction_times else 0.0
+        avg_process_time = np.mean(process_times) if process_times else 0.0
+        avg_draw_time = np.mean(draw_times) if draw_times else 0.0
 
         return (
             best_conf,
@@ -236,7 +256,10 @@ def evaluation_function(
             per_image_best,
             best_from_center,
             best_image_idx,
+            avg_load_time,
             avg_prediction_time,
+            avg_process_time,
+            avg_draw_time,
         )
 
     analysis_start = time.time()
@@ -248,7 +271,10 @@ def evaluation_function(
         per_image_best,
         overall_best_from_center,
         overall_best_image_idx,
+        avg_load_time,
         avg_prediction_time,
+        avg_process_time,
+        avg_draw_time,
     ) = analyze_images(response, draw_images)
 
     analysis_time = time.time() - analysis_start
@@ -277,11 +303,15 @@ def evaluation_function(
             f"Source: {origin}",
         )
 
+    upload_times = []
+
     for idx, (img, detections, best_idx) in enumerate(annotated_images):
 
         orig_name = response[idx].get("name", f"image_{idx}.jpg")
 
         if draw_images and img is not None:
+
+            upload_start = time.time()
 
             try:
 
@@ -292,9 +322,12 @@ def evaluation_function(
 
                 link_html = f"<b>Image: {orig_name}</b>\nLink To Annotation: (upload failed)"
 
+            upload_times.append(time.time() - upload_start)
+
         else:
 
             link_html = f"<b>Image: {orig_name}</b>"
+            upload_times.append(0.0)
 
         info = per_image_best[idx]
         det = info["best_det"]
@@ -318,6 +351,8 @@ def evaluation_function(
         combined = f"{link_html}\n{text}"
 
         append_feedback(f"Image [{idx}]", f"--- Image [{idx}] ---\n" + combined)
+
+    avg_upload_time = np.mean(upload_times) if upload_times else 0.0
 
     feedback_time = time.time() - feedback_start
 
@@ -350,7 +385,7 @@ def evaluation_function(
         feedback_items.append(("DEBUG GPU Available:", f"DEBUG GPU Available: {gpu_available}, {model_device}"))
 
         feedback_items.append(('Uploaded Image [0]', f'![Test Image]({response[0]['url']})'))
-        feedback_items.append(("DEBUG Times:", f"Model load: {model_load_time:.3f}s\nAvg prediction: {avg_prediction_time:.3f}s\nAnalysis: {analysis_time:.3f}s\nFeedback: {feedback_time:.3f}s\nTotal: {total_time:.3f}s"))        
+        feedback_items.append(("DEBUG Times:", f"Model load: {model_load_time:.3f}s\nAvg image load: {avg_load_time:.3f}s\nAvg prediction: {avg_prediction_time:.3f}s\nAvg detection process: {avg_process_time:.3f}s\nAvg drawing: {avg_draw_time:.3f}s\nAvg upload: {avg_upload_time:.3f}s\nAnalysis: {analysis_time:.3f}s\nFeedback: {feedback_time:.3f}s\nTotal: {total_time:.3f}s"))        
     is_correct = response_detection == target_class and response_detection is not None
 
     return Result(
