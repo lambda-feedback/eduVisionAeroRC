@@ -364,10 +364,10 @@ def evaluation_function(
         # print response structure for debugging purposes
         try:
             # use repr to avoid issues with binary data
-            feedback_items.append(("DEBUG Response Structure:", f"DEBUG Response Structure: {repr(response)}"))
+            append_feedback("DEBUG Response Structure:", f"DEBUG Response Structure: {repr(response)}")
             print("DEBUG Response Structure:", repr(response))
         except Exception as e:
-            feedback_items.append(("Failed to print response structure", e))
+            append_feedback("Failed to print response structure", e)
             print("Failed to print response structure", e)
 
         # also check if YOLO can use GPU (torch.cuda availability)
@@ -384,10 +384,17 @@ def evaluation_function(
         except Exception:
             model_device = None
         print(f"DEBUG GPU Available: {gpu_available}, {model_device}")
-        feedback_items.append(("DEBUG GPU Available:", f"DEBUG GPU Available: {gpu_available}, {model_device}"))
+        append_feedback("DEBUG GPU Available:", f"DEBUG GPU Available: {gpu_available}, {model_device}")
 
-        feedback_items.append(('Uploaded Image [0]', f'![Test Image]({response[0]['url']})'))
-        feedback_items.append(("DEBUG Times:", f"Model load: {model_load_time:.3f}s\nAvg image load: {avg_load_time:.3f}s\nAvg prediction: {avg_prediction_time:.3f}s\nAvg detection process: {avg_process_time:.3f}s\nAvg drawing: {avg_draw_time:.3f}s\nAvg upload: {avg_upload_time:.3f}s\nAnalysis: {analysis_time:.3f}s\nFeedback: {feedback_time:.3f}s\nTotal: {total_time:.3f}s"))        
+        # include all annotated/uploaded images in debug output
+        for idx, (img, _, _) in enumerate(annotated_images):
+            if img is not None:
+                # we previously uploaded each image and added a feedback entry in the loop above
+                # but response urls correspond to originals; to be safe, show the response url here
+                name = response[idx].get("name", f"image_{idx}.jpg")
+                append_feedback(f'Uploaded Image [{idx}]', f'![{name}]({response[idx]["url"]})')
+
+        append_feedback("DEBUG Times:", f"Model load: {model_load_time:.3f}s\nAvg image load: {avg_load_time:.3f}s\nAvg prediction: {avg_prediction_time:.3f}s\nAvg detection process: {avg_process_time:.3f}s\nAvg drawing: {avg_draw_time:.3f}s\nAvg upload: {avg_upload_time:.3f}s\nAnalysis: {analysis_time:.3f}s\nFeedback: {feedback_time:.3f}s\nTotal: {total_time:.3f}s")        
     is_correct = response_detection == target_class and response_detection is not None
 
     return Result(
