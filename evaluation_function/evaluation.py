@@ -364,7 +364,7 @@ def evaluation_function(
         # print response structure for debugging purposes
         try:
             # use repr to avoid issues with binary data
-            append_feedback("DEBUG Response Structure:", f"DEBUG Response Structure: {repr(response)}")
+            append_feedback("DEBUG Response Structure:", f"--- DEBUG Response Structure ---\n{repr(response)}")
             print("DEBUG Response Structure:", repr(response))
         except Exception as e:
             append_feedback("Failed to print response structure", e)
@@ -384,7 +384,7 @@ def evaluation_function(
         except Exception:
             model_device = None
         print(f"DEBUG GPU Available: {gpu_available}, {model_device}")
-        append_feedback("DEBUG GPU Available:", f"DEBUG GPU Available: {gpu_available}, {model_device}")
+        append_feedback("DEBUG GPU Available:", f"--- DEBUG GPU Available ---\n{gpu_available}, {model_device}")
 
         # include all annotated/uploaded images in debug output
         for idx, (img, _, _) in enumerate(annotated_images):
@@ -394,7 +394,7 @@ def evaluation_function(
                 name = response[idx].get("name", f"image_{idx}.jpg")
                 append_feedback(f'Uploaded Image [{idx}]', f'![{name}]({response[idx]["url"]})')
 
-        append_feedback("DEBUG Times:", f"Model load: {model_load_time:.3f}s\nAvg image load: {avg_load_time:.3f}s\nAvg prediction: {avg_prediction_time:.3f}s\nAvg detection process: {avg_process_time:.3f}s\nAvg drawing: {avg_draw_time:.3f}s\nAvg upload: {avg_upload_time:.3f}s\nAnalysis: {analysis_time:.3f}s\nFeedback: {feedback_time:.3f}s\nTotal: {total_time:.3f}s")        
+        append_feedback("DEBUG Times:", f"--- DEBUG Times ---\nModel load: {model_load_time:.3f}s\nAvg image load: {avg_load_time:.3f}s\nAvg prediction: {avg_prediction_time:.3f}s\nAvg detection process: {avg_process_time:.3f}s\nAvg drawing: {avg_draw_time:.3f}s\nAvg upload: {avg_upload_time:.3f}s\nAnalysis: {analysis_time:.3f}s\nFeedback: {feedback_time:.3f}s\nTotal: {total_time:.3f}s")        
     is_correct = response_detection == target_class and response_detection is not None
 
     return Result(
