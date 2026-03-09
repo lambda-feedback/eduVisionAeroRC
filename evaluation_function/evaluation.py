@@ -9,6 +9,7 @@ import requests
 import random
 import numpy as np
 import cv2
+import time
 
 
 
@@ -29,13 +30,19 @@ def evaluation_function(
     print("### Response: ", response)
     print("### Params: ", params)
 
+    start_total = time.time()
+
     draw_images = params.get("draw_images", True)
     model_name = params.get("model_name", "model.pt")
+
+    model_load_start = time.time()
 
     # Use a dict to cache models by name
     if model_name not in _model_cache:
         model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), model_name)
         _model_cache[model_name] = YOLO(model_path)
+
+    model_load_time = time.time() - model_load_start
 
     model = _model_cache[model_name]
 
@@ -44,6 +51,8 @@ def evaluation_function(
     print("Target class:", target_class)
 
     feedback_items = []
+
+    feedback_start = time.time()
 
     def append_feedback(title, text):
         feedback_items.append((title + "\n", text.strip() + "\n\n"))
@@ -125,6 +134,7 @@ def evaluation_function(
 
         annotated_images = []
         per_image_best = []
+        prediction_times = []
 
         best_from_center = False
         best_image_idx = None
@@ -154,7 +164,9 @@ def evaluation_function(
                 annotated_images.append((None, [], None))
                 continue
 
+            pred_start = time.time()
             results = model.predict(img, conf=0.5)
+            prediction_times.append(time.time() - pred_start)
 
             det_center = []
             det_all = []
@@ -215,6 +227,8 @@ def evaluation_function(
                 }
             )
 
+        avg_prediction_time = np.mean(prediction_times) if prediction_times else 0.0
+
         return (
             best_conf,
             best_detection,
@@ -222,7 +236,10 @@ def evaluation_function(
             per_image_best,
             best_from_center,
             best_image_idx,
+            avg_prediction_time,
         )
+
+    analysis_start = time.time()
 
     (
         response_conf,
@@ -231,7 +248,10 @@ def evaluation_function(
         per_image_best,
         overall_best_from_center,
         overall_best_image_idx,
+        avg_prediction_time,
     ) = analyze_images(response, draw_images)
+
+    analysis_time = time.time() - analysis_start
 
     if target_class:
 
@@ -299,6 +319,38 @@ def evaluation_function(
 
         append_feedback(f"Image [{idx}]", f"--- Image [{idx}] ---\n" + combined)
 
+    feedback_time = time.time() - feedback_start
+
+    total_time = time.time() - start_total
+
+    if params.get('debug', False):
+        # print response structure for debugging purposes
+        try:
+            # use repr to avoid issues with binary data
+            feedback_items.append(("DEBUG Response Structure:", f"DEBUG Response Structure: {repr(response)}"))
+            print("DEBUG Response Structure:", repr(response))
+        except Exception as e:
+            feedback_items.append(("Failed to print response structure", e))
+            print("Failed to print response structure", e)
+
+        # also check if YOLO can use GPU (torch.cuda availability)
+        try:
+            import torch
+            gpu_available = torch.cuda.is_available()
+        except ImportError:
+            gpu_available = "Error checking GPU availability"
+        # sometimes the model itself has a .device attribute
+        try:
+            model_device = getattr(model, 'device', None)
+            if hasattr(model_device, 'type'):
+                model_device = model_device.type
+        except Exception:
+            model_device = None
+        print(f"DEBUG GPU Available: {gpu_available}, {model_device}")
+        feedback_items.append(("DEBUG GPU Available:", f"DEBUG GPU Available: {gpu_available}, {model_device}"))
+
+        feedback_items.append(('Uploaded Image [0]', f'![Test Image]({response[0]['url']})'))
+        feedback_items.append(("DEBUG Times:", f"Model load: {model_load_time:.3f}s\nAvg prediction: {avg_prediction_time:.3f}s\nAnalysis: {analysis_time:.3f}s\nFeedback: {feedback_time:.3f}s\nTotal: {total_time:.3f}s"))        
     is_correct = response_detection == target_class and response_detection is not None
 
     return Result(
