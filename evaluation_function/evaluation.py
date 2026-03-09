@@ -300,7 +300,7 @@ def evaluation_function(
             f"--- Best detection across all images ---\n"
             f"Image: {overall_name}\n"
             f"Detected Component: {response_detection} ({response_conf:.2f})\n"
-            f"Source: {origin}",
+            f"Source: {origin}\n\n",
         )
 
     upload_times = []
