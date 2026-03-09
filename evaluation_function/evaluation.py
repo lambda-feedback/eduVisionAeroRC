@@ -307,6 +307,29 @@ def evaluation_function(
 
     for idx, (img, detections, best_idx) in enumerate(annotated_images):
 
+        info = per_image_best[idx]
+        det = info["best_det"]
+
+        if det is None:
+
+            text = "No Component Detected"
+
+        else:
+
+            _, _, _, _, conf, cls = det
+
+            origin = "center region" if info["chose_from_center"] else "full image"
+
+            text = (
+                f"Detected Component: {cls}\n"
+                f"Confidence: {conf:.2f}\n"
+                f"Source: {origin}"
+            )
+
+        combined = f"{link_html}\n{text}"
+
+        append_feedback(f"Image [{idx}]", f"--- Image [{idx}] ---\n" + combined)
+
         orig_name = response[idx].get("name", f"image_{idx}.jpg")
 
         if draw_images and img is not None:
@@ -331,28 +354,7 @@ def evaluation_function(
             link_html = f"<b>Image: {orig_name}</b>"
             upload_times.append(0.0)
 
-        info = per_image_best[idx]
-        det = info["best_det"]
-
-        if det is None:
-
-            text = "No Component Detected"
-
-        else:
-
-            _, _, _, _, conf, cls = det
-
-            origin = "center region" if info["chose_from_center"] else "full image"
-
-            text = (
-                f"Detected Component: {cls}\n"
-                f"Confidence: {conf:.2f}\n"
-                f"Source: {origin}"
-            )
-
-        combined = f"{link_html}\n{text}"
-
-        append_feedback(f"Image [{idx}]", f"--- Image [{idx}] ---\n" + combined)
+        
 
     avg_upload_time = np.mean(upload_times) if upload_times else 0.0
 
