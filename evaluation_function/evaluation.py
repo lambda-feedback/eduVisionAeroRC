@@ -317,6 +317,8 @@ def evaluation_function(
 
                 url = upload_image(img, "eduvision")
                 link_html = f'Image: <a href="{url}" target="_blank">{orig_name}\nLink To Annotation: {url}</a>'
+                # add separate feedback for this uploaded annotated image
+                append_feedback(f"Uploaded Image [{idx}]", f"![{orig_name}]({url})")
 
             except:
 
