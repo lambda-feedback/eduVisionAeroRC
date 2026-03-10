@@ -366,7 +366,7 @@ def evaluation_function(
 
     if params.get('debug', False):
         feedback_items.append(("TEST", "\n| Centered text |\n|:-------------:|\n| Hello woytfguyfgiuyftytfiufuytifuyttfuytyftyfityfifyttfiituyftfyifiytuituyfrld |\n **abc** \n\n"))
-
+        feedback_items.append(("TEST", "\n\n <p align='center'>Ten tekst będzie wycentrowany</p>\n\n"))
                         # print response structure for debugging purposes
         try:
             # use repr to avoid issues with binary data
