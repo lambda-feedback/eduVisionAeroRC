@@ -365,7 +365,7 @@ def evaluation_function(
     total_time = time.time() - start_total
 
     if params.get('debug', False):
-        feedback_items.append(("TEST", "| Centered text |\n|:-------------:|\n| Hello woytfguyfgiuyftytfiufuytifuyttfuytyftyfityfifyttfiituyftfyifiytuituyfrld |"))
+        feedback_items.append(("TEST", "\n| Centered text |\n|:-------------:|\n| Hello woytfguyfgiuyftytfiufuytifuyttfuytyftyfityfifyttfiituyftfyifiytuituyfrld |\n **abc** \n\n"))
 
                         # print response structure for debugging purposes
         try:
