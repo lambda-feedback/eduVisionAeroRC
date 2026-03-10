@@ -400,9 +400,9 @@ def evaluation_function(
                 append_feedback(f'Uploaded Image [{idx}]', f'![{name}]({response[idx]["url"]})')
 
         append_feedback("DEBUG Times:", f"--- DEBUG Times ---\nModel load: {model_load_time:.3f}s\nAvg image load: {avg_load_time:.3f}s\nAvg prediction: {avg_prediction_time:.3f}s\nAvg detection process: {avg_process_time:.3f}s\nAvg drawing: {avg_draw_time:.3f}s\nAvg upload: {avg_upload_time:.3f}s\nAnalysis: {analysis_time:.3f}s\nFeedback: {feedback_time:.3f}s\nTotal: {total_time:.3f}s")        
-        feedback_items.append(("TEST", "\n| Centered text |\n|:-------------:|\n| Hello woytfguyfgiuyftytfiufuytifuyttfuytyftyfityfifyttfiituyftfyifiytuituyfrld |\n **abc** \n\n"))
-        feedback_items.append(("TEST", "\n\n <p align='center'>Ten tekst będzie wycentrowany</p>\n\n"))
-        feedback_items.append(("TEST", """
+        feedback_items.append(("TEST1", "\n| Centered text |\n|:-------------:|\n| Hello woytfguyfgiuyftytfiufuytifuyttfuytyftyfityfifyttfiituyftfyifiytuituyfrld |\n **abc** \n\n"))
+        feedback_items.append(("TESTa", "\n\n <p align='center'>Ten tekst będzie wycentrowany</p>\n\n"))
+        feedback_items.append(("TESTb", """
 # Tytuł
 To jest **pogrubiony tekst** i *kursywa*.
 
