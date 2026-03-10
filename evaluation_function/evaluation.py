@@ -402,6 +402,15 @@ def evaluation_function(
         append_feedback("DEBUG Times:", f"--- DEBUG Times ---\nModel load: {model_load_time:.3f}s\nAvg image load: {avg_load_time:.3f}s\nAvg prediction: {avg_prediction_time:.3f}s\nAvg detection process: {avg_process_time:.3f}s\nAvg drawing: {avg_draw_time:.3f}s\nAvg upload: {avg_upload_time:.3f}s\nAnalysis: {analysis_time:.3f}s\nFeedback: {feedback_time:.3f}s\nTotal: {total_time:.3f}s")        
         feedback_items.append(("TEST", "\n| Centered text |\n|:-------------:|\n| Hello woytfguyfgiuyftytfiufuytifuyttfuytyftyfityfifyttfiituyftfyifiytuituyfrld |\n **abc** \n\n"))
         feedback_items.append(("TEST", "\n\n <p align='center'>Ten tekst będzie wycentrowany</p>\n\n"))
+        feedback_items.append(("TEST", """
+# Tytuł
+To jest **pogrubiony tekst** i *kursywa*.
+
+- Punkt 1
+- Punkt 2
+
+<p align="center">Wycentrowany tekst HTML</p>
+"""))
     is_correct = response_detection == target_class and response_detection is not None
 
     return Result(
