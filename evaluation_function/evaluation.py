@@ -365,7 +365,9 @@ def evaluation_function(
     total_time = time.time() - start_total
 
     if params.get('debug', False):
-        # print response structure for debugging purposes
+        feedback_items.append(("TEST", "| Centered text |\n|:-------------:|\n| Hello woytfguyfgiuyftytfiufuytifuyttfuytyftyfityfifyttfiituyftfyifiytuituyfrld |"))
+
+                        # print response structure for debugging purposes
         try:
             # use repr to avoid issues with binary data
             append_feedback("DEBUG Response Structure:", f"--- DEBUG Response Structure ---\n{repr(response)}")
