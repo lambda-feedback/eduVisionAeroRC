@@ -286,7 +286,7 @@ def evaluation_function(
     if target_class:
         append_feedback(
             "Target",
-            f"### Target component: {target_class}\n---\n\n",
+            f"### Target component: {target_class} \n\n---\n\n",
         )
 
     if response_detection and len(response) > 1:
@@ -300,7 +300,7 @@ def evaluation_function(
             f"- **Image:** `{overall_name}`\n"
             f"- **Detected Component:** `{response_detection}`\n"
             f"- **Confidence:** `{response_conf:.2f}`\n"
-            f"- **Source:** `{origin}`\n---\n\n",
+            f"- **Source:** `{origin}` \n\n---\n\n",
         )
 
     upload_times = []
@@ -329,9 +329,9 @@ def evaluation_function(
             try:
                 url = upload_image(img, "eduvision")
                 # add separate feedback for this uploaded annotated image (Markdown image)
-                append_feedback(f"Uploaded Image [{idx}]", f"![{orig_name}]({url})\n---\n\n")
+                append_feedback(f"Uploaded Image [{idx}]", f"![{orig_name}]({url}) \n\n---\n\n")
             except:
-                append_feedback(f"Uploaded Image [{idx}]", f"*Image upload failed for {orig_name}*\n---\n\n")
+                append_feedback(f"Uploaded Image [{idx}]", f"*Image upload failed for {orig_name}* \n\n---\n\n")
             upload_times.append(time.time() - upload_start)
         else:
             upload_times.append(0.0)
