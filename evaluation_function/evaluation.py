@@ -57,8 +57,8 @@ def evaluation_function(
     def append_feedback(title, text):
         # Use standard Markdown for all feedback items
         # Title as level 2 heading, text as Markdown body
-        markdown_title = f"<p><\p>\n## {title.strip()}\n"
-        markdown_body = "<p><\p>\n" + text.strip() + "\n"
+        markdown_title = f"\n\n## {title.strip()}\n"
+        markdown_body = "\n\n" + text.strip() + "\n"
         feedback_items.append((markdown_title, markdown_body))
 
     def get_class_color(class_name):
