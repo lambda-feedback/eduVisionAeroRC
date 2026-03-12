@@ -334,6 +334,7 @@ def evaluation_function(
                 append_feedback(f"Uploaded Image [{idx}]", f"*Image upload failed for {orig_name}* \n\n---\n\n")
             upload_times.append(time.time() - upload_start)
         else:
+            append_feedback(f"Separator", f" \n\n---\n\n")
             upload_times.append(0.0)
 
         
