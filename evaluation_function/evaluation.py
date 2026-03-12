@@ -343,14 +343,16 @@ def evaluation_function(
 
     total_time = time.time() - start_total
 
-    if params.get('debug', False):
-        # print response structure for debugging purposes
+    if params.get('debug_response', False):
+         # print response structure for debugging purposes
         try:
             append_feedback("DEBUG Response Structure", f"```python\n{repr(response)}\n```")
             print("DEBUG Response Structure:", repr(response))
         except Exception as e:
             append_feedback("Failed to print response structure", f"{e}")
             print("Failed to print response structure", e)
+
+    if params.get('debug', False):
 
         # also check if YOLO can use GPU (torch.cuda availability)
         try:
