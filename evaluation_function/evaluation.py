@@ -58,7 +58,7 @@ def evaluation_function(
         # Use standard Markdown for all feedback items
         # Title as level 2 heading, text as Markdown body
         markdown_title = f"## {title.strip()}\n"
-        markdown_body = text.strip() + "\n\n"
+        markdown_body = text.strip() + "\n"
         feedback_items.append((markdown_title, markdown_body))
 
     def get_class_color(class_name):
@@ -286,7 +286,7 @@ def evaluation_function(
     if target_class:
         append_feedback(
             "Target",
-            f"**Target component:** `{target_class}`",
+            f"### Target component: {target_class}\n---\n",
         )
 
     if response_detection and len(response) > 1:
@@ -296,11 +296,11 @@ def evaluation_function(
         )
         append_feedback(
             "Overall Best",
-            f"**Best detection across all images**\n\n"
+            f"### Best detection across all images\n\n"
             f"- **Image:** `{overall_name}`\n"
             f"- **Detected Component:** `{response_detection}`\n"
             f"- **Confidence:** `{response_conf:.2f}`\n"
-            f"- **Source:** `{origin}`\n",
+            f"- **Source:** `{origin}`\n---\n",
         )
 
     upload_times = []
@@ -321,16 +321,16 @@ def evaluation_function(
             )
         append_feedback(
             f"Image [{idx}]",
-            f"**Image:** `{orig_name}`\n\n{text}"
+            f"### Image: {orig_name}\n{text}\n"
         )
         if draw_images and img is not None:
             upload_start = time.time()
             try:
                 url = upload_image(img, "eduvision")
                 # add separate feedback for this uploaded annotated image (Markdown image)
-                append_feedback(f"Uploaded Image [{idx}]", f"![{orig_name}]({url})")
+                append_feedback(f"Uploaded Image [{idx}]", f"![{orig_name}]({url})\n---\n")
             except:
-                append_feedback(f"Uploaded Image [{idx}]", f"*Image upload failed for `{orig_name}`*")
+                append_feedback(f"Uploaded Image [{idx}]", f"*Image upload failed for {orig_name}*\n---\n")
             upload_times.append(time.time() - upload_start)
         else:
             upload_times.append(0.0)
@@ -346,7 +346,7 @@ def evaluation_function(
     if params.get('debug_response', False):
          # print response structure for debugging purposes
         try:
-            append_feedback("DEBUG Response Structure", f"```python\n{repr(response)}\n```")
+            append_feedback("DEBUG Response Structure", f"**Response Structur:** {repr(response)}")
             print("DEBUG Response Structure:", repr(response))
         except Exception as e:
             append_feedback("Failed to print response structure", f"{e}")
