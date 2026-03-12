@@ -55,7 +55,11 @@ def evaluation_function(
     feedback_start = time.time()
 
     def append_feedback(title, text):
-        feedback_items.append((title + "\n", text.strip() + "\n\n"))
+        # Use standard Markdown for all feedback items
+        # Title as level 2 heading, text as Markdown body
+        markdown_title = f"## {title.strip()}\n"
+        markdown_body = text.strip() + "\n\n"
+        feedback_items.append((markdown_title, markdown_body))
 
     def get_class_color(class_name):
         random.seed(hash(class_name) % 10000)
@@ -280,80 +284,55 @@ def evaluation_function(
     analysis_time = time.time() - analysis_start
 
     if target_class:
-
         append_feedback(
             "Target",
-            f"--- Target ---\n"
-            f"Target component: {target_class}",
+            f"**Target component:** `{target_class}`",
         )
 
     if response_detection and len(response) > 1:
-
         origin = "center region" if overall_best_from_center else "full image"
-
         overall_name = response[overall_best_image_idx].get(
             "name", f"image_{overall_best_image_idx}.jpg"
         )
-
         append_feedback(
             "Overall Best",
-            f"--- Best detection across all images ---\n"
-            f"Image: {overall_name}\n"
-            f"Detected Component: {response_detection} ({response_conf:.2f})\n"
-            f"Source: {origin}\n\n",
+            f"**Best detection across all images**\n\n"
+            f"- **Image:** `{overall_name}`\n"
+            f"- **Detected Component:** `{response_detection}`\n"
+            f"- **Confidence:** `{response_conf:.2f}`\n"
+            f"- **Source:** `{origin}`\n",
         )
 
     upload_times = []
 
     for idx, (img, detections, best_idx) in enumerate(annotated_images):
-
         orig_name = response[idx].get("name", f"image_{idx}.jpg")
-
-        # set default link_html
-        link_html = f"<b>Image: {orig_name}</b>"
-
         info = per_image_best[idx]
         det = info["best_det"]
-
         if det is None:
-
-            text = "No Component Detected"
-
+            text = "*No component detected.*"
         else:
-
             _, _, _, _, conf, cls = det
-
             origin = "center region" if info["chose_from_center"] else "full image"
-
             text = (
-                f"Detected Component: {cls}\n"
-                f"Confidence: {conf:.2f}\n"
-                f"Source: {origin}"
+                f"- **Detected Component:** `{cls}`\n"
+                f"- **Confidence:** `{conf:.2f}`\n"
+                f"- **Source:** `{origin}`"
             )
-
-        combined = f"{link_html}\n{text}"
-
-        append_feedback(f"Image [{idx}]", f"--- Image [{idx}] ---\n" + combined)
-
+        append_feedback(
+            f"Image [{idx}]",
+            f"**Image:** `{orig_name}`\n\n{text}"
+        )
         if draw_images and img is not None:
-
             upload_start = time.time()
-
             try:
-
                 url = upload_image(img, "eduvision")
-                link_html = f'Image: <a href="{url}" target="_blank">{orig_name}\nLink To Annotation: {url}</a>'
-                # add separate feedback for this uploaded annotated image
+                # add separate feedback for this uploaded annotated image (Markdown image)
                 append_feedback(f"Uploaded Image [{idx}]", f"![{orig_name}]({url})")
-
             except:
-
-                link_html = f"<b>Image: {orig_name}</b>\nLink To Annotation: (upload failed)"
-
+                append_feedback(f"Uploaded Image [{idx}]", f"*Image upload failed for `{orig_name}`*")
             upload_times.append(time.time() - upload_start)
-
         else:
-
             upload_times.append(0.0)
 
         
@@ -365,14 +344,12 @@ def evaluation_function(
     total_time = time.time() - start_total
 
     if params.get('debug', False):
-      
-                        # print response structure for debugging purposes
+        # print response structure for debugging purposes
         try:
-            # use repr to avoid issues with binary data
-            append_feedback("DEBUG Response Structure:", f"--- DEBUG Response Structure ---\n{repr(response)}")
+            append_feedback("DEBUG Response Structure", f"```python\n{repr(response)}\n```")
             print("DEBUG Response Structure:", repr(response))
         except Exception as e:
-            append_feedback("Failed to print response structure", e)
+            append_feedback("Failed to print response structure", f"{e}")
             print("Failed to print response structure", e)
 
         # also check if YOLO can use GPU (torch.cuda availability)
@@ -389,17 +366,27 @@ def evaluation_function(
         except Exception:
             model_device = None
         print(f"DEBUG GPU Available: {gpu_available}, {model_device}")
-        append_feedback("DEBUG GPU Available:", f"--- DEBUG GPU Available ---\n{gpu_available}, {model_device}")
+        append_feedback("DEBUG GPU Available", f"- **GPU Available:** `{gpu_available}`\n- **Model Device:** `{model_device}`")
 
         # include all annotated/uploaded images in debug output
         for idx, (img, _, _) in enumerate(annotated_images):
             if img is not None:
-                # we previously uploaded each image and added a feedback entry in the loop above
-                # but response urls correspond to originals; to be safe, show the response url here
                 name = response[idx].get("name", f"image_{idx}.jpg")
                 append_feedback(f'Uploaded Image [{idx}]', f'![{name}]({response[idx]["url"]})')
 
-        append_feedback("DEBUG Times:", f"--- DEBUG Times ---\nModel load: {model_load_time:.3f}s\nAvg image load: {avg_load_time:.3f}s\nAvg prediction: {avg_prediction_time:.3f}s\nAvg detection process: {avg_process_time:.3f}s\nAvg drawing: {avg_draw_time:.3f}s\nAvg upload: {avg_upload_time:.3f}s\nAnalysis: {analysis_time:.3f}s\nFeedback: {feedback_time:.3f}s\nTotal: {total_time:.3f}s")        
+        append_feedback(
+            "DEBUG Times",
+            f"| Step | Time (s) |\n|---|---|\n"
+            f"| Model load | {model_load_time:.3f} |\n"
+            f"| Avg image load | {avg_load_time:.3f} |\n"
+            f"| Avg prediction | {avg_prediction_time:.3f} |\n"
+            f"| Avg detection process | {avg_process_time:.3f} |\n"
+            f"| Avg drawing | {avg_draw_time:.3f} |\n"
+            f"| Avg upload | {avg_upload_time:.3f} |\n"
+            f"| Analysis | {analysis_time:.3f} |\n"
+            f"| Feedback | {feedback_time:.3f} |\n"
+            f"| **Total** | **{total_time:.3f}** |\n"
+        )
 
     is_correct = response_detection == target_class and response_detection is not None
 
