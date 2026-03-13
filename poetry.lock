@@ -1254,8 +1254,8 @@ parsing = ["antlr4-python3-runtime (==4.13.2)", "lark (==1.2.2)", "latex2sympy @
 [package.source]
 type = "git"
 url = "https://github.com/lambda-feedback/toolkit-python.git"
-reference = "feature/image-upload"
-resolved_reference = "b375d16f0d55dc092fc30b036415a247e2459eea"
+reference = "bug/ipc"
+resolved_reference = "140cf493bd3ab32aa379953fd4ab940d45cb1ecd"
 
 [[package]]
 name = "markupsafe"
@@ -3549,4 +3549,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "346cc77ac7c3ffa2d92dfdef7457a2a808cede7ea7c222462926d78db643f754"
+content-hash = "71446a7b56bf3f5e7285956ad48d80330439e34c4a76d27d00ccb4f68df36eb3"
