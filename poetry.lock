@@ -1254,8 +1254,8 @@ parsing = ["antlr4-python3-runtime (==4.13.2)", "lark (==1.2.2)", "latex2sympy @
 [package.source]
 type = "git"
 url = "https://github.com/lambda-feedback/toolkit-python.git"
-reference = "bug/ipc"
-resolved_reference = "140cf493bd3ab32aa379953fd4ab940d45cb1ecd"
+reference = "HEAD"
+resolved_reference = "fa050db7b941867797f7365970faa1971532397b"
 
 [[package]]
 name = "markupsafe"
@@ -3549,4 +3549,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "71446a7b56bf3f5e7285956ad48d80330439e34c4a76d27d00ccb4f68df36eb3"
+content-hash = "c2182aab7cf74967f0b7b1c3e3400b4baa7f445e6ff6fb85ef3e70a0935aecf0"
