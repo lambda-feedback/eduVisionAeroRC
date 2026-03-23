@@ -22,15 +22,15 @@ def evaluation_function(
     answer: Any,
     params: Params,
 ) -> Result:
-
+    start_total = time.time()
 
     global _model_cache
 
-    print("### Answer: ", answer)
-    print("### Response: ", response)
-    print("### Params: ", params)
+    #print("### Answer: ", answer)
+    #print("### Response: ", response)
+    #print("### Params: ", params)
 
-    start_total = time.time()
+    
 
     draw_images = params.get("draw_images", True)
     model_name = params.get("model_name", "model.pt")
@@ -48,7 +48,7 @@ def evaluation_function(
 
     target_class = params.get("target", None)
 
-    print("Target class:", target_class)
+    # print("Target class:", target_class)
 
     feedback_items = []
 
@@ -349,28 +349,28 @@ def evaluation_function(
          # print response structure for debugging purposes
         try:
             append_feedback("DEBUG Response Structure", f"**Response Structur:** {repr(response)}")
-            print("DEBUG Response Structure:", repr(response))
+            #print("DEBUG Response Structure:", repr(response))
         except Exception as e:
             append_feedback("Failed to print response structure", f"{e}")
-            print("Failed to print response structure", e)
+            #print("Failed to print response structure", e)
 
     if params.get('debug', False):
 
         # also check if YOLO can use GPU (torch.cuda availability)
-        try:
-            import torch
-            gpu_available = torch.cuda.is_available()
-        except ImportError:
-            gpu_available = "Error checking GPU availability"
+        #try:
+        #    import torch
+        #    gpu_available = torch.cuda.is_available()
+        #except ImportError:
+        #    gpu_available = "Error checking GPU availability"
         # sometimes the model itself has a .device attribute
-        try:
-            model_device = getattr(model, 'device', None)
-            if hasattr(model_device, 'type'):
-                model_device = model_device.type
-        except Exception:
-            model_device = None
-        print(f"DEBUG GPU Available: {gpu_available}, {model_device}")
-        append_feedback("DEBUG GPU Available", f"- **GPU Available:** `{gpu_available}`\n- **Model Device:** `{model_device}`")
+        #try:
+        #    model_device = getattr(model, 'device', None)
+        #    if hasattr(model_device, 'type'):
+        #        model_device = model_device.type
+        #except Exception:
+        #    model_device = None
+        #print(f"DEBUG GPU Available: {gpu_available}, {model_device}")
+        #append_feedback("DEBUG GPU Available", f"- **GPU Available:** `{gpu_available}`\n- **Model Device:** `{model_device}`")
 
         # include all annotated/uploaded images in debug output
         for idx, (img, _, _) in enumerate(annotated_images):
