@@ -24,7 +24,6 @@ def evaluation_function(
 ) -> Result:
     start_total = time.time()
 
-    global _model_cache
 
     #print("### Answer: ", answer)
     #print("### Response: ", response)
