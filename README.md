@@ -3,6 +3,10 @@
 
 This repository contains an advanced evaluation function designed for the Aero RC project. Its main purpose is to automatically analyze and evaluate image-based student responses using a YOLO object detection model. The function is tailored for tasks where students upload images as answers, and the evaluation is based on the detection and classification of objects/components within those images.
 
+## Deployment
+[![Create Release Request](https://img.shields.io/badge/Create%20Release%20Request-blue?style=for-the-badge)](https://github.com/lambda-feedback/eduVisionAeroRC/issues/new?template=release-request.yml)
+
+
 ## Purpose
 
 This evaluation function is intended to:
