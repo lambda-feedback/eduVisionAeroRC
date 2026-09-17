@@ -29,16 +29,34 @@ def evaluation_function(
     #print("### Response: ", response)
     #print("### Params: ", params)
 
-    
+    if not response:
+        # Note: the first element of a feedback_items tuple is only an
+        # internal grouping tag for lf_toolkit.Result - it is never shown
+        # to the student, so any visible heading must live in the body text.
+        return Result(
+            is_correct=False,
+            feedback_items=[(
+                "\n\n## No Image Provided\n",
+                "\n\n### No Image Provided\n\nPlease upload at least one image of the component to be evaluated.\n",
+            )],
+        )
 
-    draw_images = params.get("draw_images", True)
+    # `return_images` is the deprecated name for `draw_images`, kept for
+    # backwards compatibility with questions configured before the rename.
+    draw_images = params.get("draw_images", params.get("return_images", True))
+    show_target = params.get("show_target", True)
     model_name = params.get("model_name", "model.pt")
+    conf_threshold = params.get("conf_threshold", 0.5)
 
     model_load_start = time.time()
 
     # Use a dict to cache models by name
     if model_name not in _model_cache:
-        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), model_name)
+        model_dir = os.path.dirname(os.path.abspath(__file__))
+        # Strip any directory components so `model_name` can't be used to
+        # load a model file from outside the evaluation_function directory.
+        safe_model_name = os.path.basename(model_name)
+        model_path = os.path.join(model_dir, safe_model_name)
         _model_cache[model_name] = YOLO(model_path)
 
     model_load_time = time.time() - model_load_start
@@ -163,12 +181,12 @@ def evaluation_function(
                     img_data = requests.get(url).content
                     img = Image.open(io.BytesIO(img_data)).convert("RGB")
 
-            except:
+            except Exception as e:
 
                 load_times.append(time.time() - load_start)
 
                 per_image_best.append(
-                    {"best_det": None, "chose_from_center": False}
+                    {"best_det": None, "chose_from_center": False, "load_error": str(e)}
                 )
 
                 annotated_images.append((None, [], None))
@@ -177,7 +195,7 @@ def evaluation_function(
             load_times.append(time.time() - load_start)
 
             pred_start = time.time()
-            results = model.predict(img, conf=0.5)
+            results = model.predict(img, conf=conf_threshold)
             prediction_times.append(time.time() - pred_start)
 
             process_start = time.time()
@@ -244,6 +262,7 @@ def evaluation_function(
                 {
                     "best_det": best_det,
                     "chose_from_center": chosen_from_center,
+                    "load_error": None,
                 }
             )
 
@@ -282,7 +301,7 @@ def evaluation_function(
 
     analysis_time = time.time() - analysis_start
 
-    if target_class:
+    if target_class and show_target:
         append_feedback(
             "Target",
             f"### Target component: {target_class} \n\n---\n\n",
@@ -308,7 +327,9 @@ def evaluation_function(
         orig_name = response[idx].get("name", f"image_{idx}.jpg")
         info = per_image_best[idx]
         det = info["best_det"]
-        if det is None:
+        if info.get("load_error"):
+            text = f"*Could not load image: {info['load_error']}*"
+        elif det is None:
             text = "*No component detected.*"
         else:
             _, _, _, _, conf, cls = det
@@ -329,8 +350,10 @@ def evaluation_function(
                 url = upload_image(img, "eduvision")
                 # add separate feedback for this uploaded annotated image (Markdown image)
                 append_feedback(f"Uploaded Image [{idx}]", f"![{orig_name}]({url}) \n\n---\n\n")
-            except:
-                append_feedback(f"Uploaded Image [{idx}]", f"*Image upload failed for {orig_name}* \n\n---\n\n")
+            except Exception as e:
+                # Only leak the underlying error (e.g. AWS/S3 details) in debug mode.
+                detail = f": {e}" if params.get('debug', False) else ""
+                append_feedback(f"Uploaded Image [{idx}]", f"*Image upload failed for {orig_name}{detail}* \n\n---\n\n")
             upload_times.append(time.time() - upload_start)
         else:
             append_feedback(f"Separator [{idx}]", f" \n\n---\n\n")
@@ -347,7 +370,7 @@ def evaluation_function(
     if params.get('debug_response', False):
          # print response structure for debugging purposes
         try:
-            append_feedback("DEBUG Response Structure", f"**Response Structur:** {repr(response)}")
+            append_feedback("DEBUG Response Structure", f"**Response Structure:** {repr(response)}")
             #print("DEBUG Response Structure:", repr(response))
         except Exception as e:
             append_feedback("Failed to print response structure", f"{e}")

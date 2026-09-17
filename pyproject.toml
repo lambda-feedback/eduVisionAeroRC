@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "evaluation_function"
 version = "0.0.1"
-description = ""
+description = "Lambda Feedback evaluation function that grades RC vehicle component photos with a YOLOv8 object-detection model."
 authors = ["Andreas Pfurtscheller <andreas.pfurtscheller23@ic.ac.uk>"]
 readme = "README.md"
 packages = [{ include = "evaluation_function" }]
