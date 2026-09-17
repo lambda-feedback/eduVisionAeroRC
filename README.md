@@ -15,35 +15,41 @@ This repository contains an evaluation function for the **Aero RC** project on t
 - Compare the single most confident detection across the whole response against an expected class, configured per-question via the `target` parameter.
 - Return `is_correct` plus rich Markdown feedback: per-image results, annotated/uploaded images, and optional debug/timing information.
 
-**Important:** This function only makes sense for image-upload questions. The `answer` argument passed by the platform is currently **not read at all** — the expected component must be set via `params.target` on the question, not via the question's answer field. See [docs/dev.md](docs/dev.md#the-answer-argument-is-unused) for details.
+**Important:** Grading is driven entirely by the `target` key set in the question's **Evaluation Function Parameters** — the question's own Answer field is **not used**. See [Setting Up a Question](#setting-up-a-question) below.
 
 For the full technical write-up (algorithm, internals, gotchas) see **[docs/dev.md](docs/dev.md)**. For a teacher-facing guide to configuring a question see **[docs/user.md](docs/user.md)**.
 
+## Setting Up a Question
+
+This function is used entirely through the Lambda Feedback platform UI — no request/response format to worry about:
+
+1. Add an **Image Input** to the question so students can upload photo(s).
+2. Select **this evaluation function** for the question.
+3. Optionally, add key/value pairs under the question's **Evaluation Function Parameters** tab — see [Parameters](#parameters) below for what's available (all of them are optional).
+
 ## How It Works
 
-1. **Image input:** `response` must be a list of dicts, each with at least a `url` (e.g. `{ "url": "https://...", "name": "photo1.jpg" }`). An empty/missing response short-circuits immediately with feedback asking for an image — no model is loaded.
+1. **Image input:** Students upload photo(s) via the platform's Image Input component. If a student submits nothing, feedback asks for an image and no model is loaded.
 2. **Model loading:** The requested YOLO model (`model_name`, default `model.pt`) is loaded from the `evaluation_function` directory and cached in memory for the lifetime of the process, so repeated invocations on a warm container are fast.
 3. **Detection:** For each image, the model predicts bounding boxes, class labels and confidence scores (`conf_threshold` minimum, default `0.5`). Detections whose box contains the image's center point are preferred; if none do, all detections are considered. Within that pool, the single highest-confidence detection becomes that image's "best" result.
 4. **Overall result:** Across *all* submitted images, the single highest-confidence "best" detection (from any one image) becomes the response's overall detected class — this is what gets compared to `target`. See the [multi-image caveat](docs/dev.md#caveat-one-bad-photo-can-decide-the-whole-response) for why this matters.
 5. **Annotation:** If enabled, every detected box is drawn on the image (color derived from the class name), the winning "best" box is highlighted with a red outline and a star badge, and the image center is marked with a dot.
 6. **Upload & feedback:** Annotated images are uploaded to S3 (via `lf_toolkit`) and embedded in the feedback as Markdown images. Textual feedback reports the target, the per-image result, and the overall best result.
-7. **Correctness:** `is_correct` is `True` only if the overall detected class is an **exact, case-sensitive string match** for `target`.
+7. **Correctness:** The question is marked correct only if the overall detected class is an **exact, case-sensitive string match** for `target`.
 
 ## Parameters
 
-`response` (the student's submitted image(s)) is the only **required** input — if it's empty or missing, the function short-circuits with a "please upload an image" message instead of crashing. Every key in `params` below is **optional**: each is read with `params.get(name, default)`, so a question's configuration can set as few or as many of them as it needs, and any left unset silently fall back to their default.
+The only thing actually required is that the student submits at least one photo (via the Image Input) — if they submit nothing, feedback asks for an image instead of grading. Everything below is an **optional** key/value pair you may add under the question's **Evaluation Function Parameters** tab; anything left out falls back to its default.
 
 | Parameter | Required? | Type | Default | Description |
 |---|---|---|---|---|
-| `target` | Optional | `string` | `None` | Expected component class name. Must exactly match one of the model's class labels (see [class lists](docs/dev.md#model-files--detectable-classes)) for `is_correct` to be `True`. If omitted, detection still runs as normal and all the usual feedback (per-image results, annotated images, overall best) is returned — there's just nothing to grade against, so `is_correct` is always `False`. Useful for detection-only/practice questions where you don't need a pass/fail result. In practice, set this whenever the question needs an actual graded outcome. |
+| `target` | Optional | `string` | `None` | Expected component class name. Must exactly match one of the model's class labels (see [class lists](docs/dev.md#model-files--detectable-classes)) for the question to be marked correct. If omitted, detection still runs as normal and all the usual feedback (per-image results, annotated images, overall best) is returned — there's just nothing to grade against, so the question is never marked correct. Useful for detection-only/practice questions where you don't need a pass/fail result. In practice, set this whenever the question needs an actual graded outcome. |
 | `model_name` | Optional | `string` | `"model.pt"` | Filename of the `.pt` weights file to load from `evaluation_function/`. Only the filename is used (any path component is stripped), so this cannot be used to load files outside that directory. See available models below. |
 | `conf_threshold` | Optional | `number` | `0.5` | Minimum confidence (0–1) Ultralytics requires before returning a detection. |
 | `draw_images` | Optional | `bool` | `True` | Whether to draw bounding-box annotations and upload/embed the annotated image in the feedback. `return_images` is accepted as a deprecated alias for backwards compatibility. |
 | `show_target` | Optional | `bool` | `True` | Whether to include the "Target component" line in the feedback. |
 | `debug` | Optional | `bool` | `False` | Adds a step-by-step timing table and re-embeds every annotated image by its *original submitted* URL. Also includes the underlying error detail when an image upload fails (suppressed otherwise, to avoid leaking S3/AWS internals to students). |
-| `debug_response` | Optional | `bool` | `False` | Dumps the raw `repr()` of the entire `response` payload as feedback — useful to see exactly what the platform sent. |
-
-> The `answer` argument and the `is_latex` / `simplify` / `symbols` keys from the generic `Params` type are not used by this function — nothing needs to be set there.
+| `debug_response` | Optional | `bool` | `False` | Dumps the raw structure of what the platform sent as feedback — useful for troubleshooting. |
 
 ## Detectable Objects / Models
 
@@ -105,55 +111,6 @@ suspension,wishbone,rear,up,rhs
 ```
 
 See [docs/user.md](docs/user.md#full-list-of-valid-target-values) for a teacher-facing version of this list, and [docs/dev.md](docs/dev.md#model-files--detectable-classes) for how these were extracted and the data-quality caveats behind the inconsistent naming.
-
-## Data Format
-
-### Answer (Reference Data)
-Not used by this function (see [above](#purpose)).
-
-### Response (Student Submission)
-```json
-[
-  {
-    "url": "https://.../photo1.jpg",
-    "name": "photo1.jpg",
-    "size": 123456,
-    "type": "image/jpeg",
-    "comment": ""
-  }
-]
-```
-`url` may also be a `file://` path (used by the local test suite).
-
-### Params (Evaluation Parameters)
-```json
-{
-  "target": "shockabsorber_body",
-  "model_name": "model.pt",
-  "conf_threshold": 0.5,
-  "draw_images": true,
-  "show_target": true,
-  "debug": false
-}
-```
-
-## Output
-
-`Result.to_dict()` (produced by `lf_toolkit`) returns:
-
-| Key | Type | Description |
-|---|---|---|
-| `is_correct` | `bool` | Whether the overall detected class matches `target`. |
-| `feedback` | `string` | All feedback bodies, in order, joined with `<br>`. Contains Markdown (headings, tables, images). |
-
-### Example Output
-
-```json
-{
-  "is_correct": true,
-  "feedback": "\n\n### Target component: shockabsorber_body \n\n---\n\n\n\n### Image photo1.jpg\n\n- **Detected Component:** `shockabsorber_body`\n- **Confidence:** `0.94`\n- **Source:** `center region`\n\n<br>![photo1.jpg](https://.../eduvision/....jpg) \n\n---\n\n"
-}
-```
 
 ## Functionality Details
 

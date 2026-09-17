@@ -10,13 +10,13 @@ Students upload one or more photos as their response. They don't type anything �
 
 ## Setting up a question
 
-In the question's evaluation function parameters, set:
+1. Add an **Image Input** to the question so students can upload photo(s).
+2. Select **this evaluation function** for the question.
+3. Under the question's **Evaluation Function Parameters** tab, add key/value pairs as needed — most importantly `target`:
 
-```json
-{
-  "target": "shockabsorber_body"
-}
-```
+| Key | Value |
+|---|---|
+| `target` | `shockabsorber_body` |
 
 `target` is **optional**. When set, it must be the **exact** component name from the list below (copy-paste it — spelling, spacing, capitalization and punctuation all matter, and a few names have deliberate quirks baked into how the model was trained).
 
@@ -37,14 +37,12 @@ The only thing that's actually required is that the student submits at least one
 
 ### Recommended settings
 
-```json
-{
-  "target": "shockabsorber_body",
-  "show_target": true,
-  "draw_images": true,
-  "debug": false
-}
-```
+| Key | Value |
+|---|---|
+| `target` | `shockabsorber_body` |
+| `show_target` | `true` |
+| `draw_images` | `true` |
+| `debug` | `false` |
 
 - `show_target: true` — shows students which component they were asked to photograph.
 - `draw_images: true` — shows students an annotated copy of their photo (boxes around what was detected), which helps them understand *why* they got the result they did.
@@ -97,12 +95,10 @@ veiw Shockabsorber.springnut veiw
 
 If your question is specifically about the front/rear wishbone suspension arms, you can point it at the smaller, specialized model:
 
-```json
-{
-  "target": "suspension,wishbone,front,bot,rhs",
-  "model_name": "model_3_PARTS.pt"
-}
-```
+| Key | Value |
+|---|---|
+| `target` | `suspension,wishbone,front,bot,rhs` |
+| `model_name` | `model_3_PARTS.pt` |
 
 Valid values for this model:
 
