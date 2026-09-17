@@ -2,6 +2,8 @@
 
 This evaluation function grades a student's **photo(s)** of an RC vehicle component. A computer-vision model looks at each submitted photo, decides what component it shows, and checks that against the component you specify for the question.
 
+> **Only works with the Image Input response type.** Set the question up to collect images from students — this function cannot grade text, numeric, or symbolic responses.
+
 ## What students submit
 
 Students upload one or more photos as their response. They don't type anything — there's nothing to compare their answer text against, because grading is entirely based on what the model recognizes in the photo(s).

@@ -3,6 +3,8 @@
 
 This repository contains an evaluation function for the **Aero RC** project on the Lambda Feedback platform. It automatically grades image-based student responses by running a YOLOv8 (Ultralytics) object-detection model over each submitted photo and checking whether the expected RC vehicle component was detected.
 
+> **This evaluation function only works with the Image Input response type.** It must be paired with a question configured to collect images from students; it does not support text, numeric, or symbolic responses.
+
 ## Deployment
 [![Create Release Request](https://img.shields.io/badge/Create%20Release%20Request-blue?style=for-the-badge)](https://github.com/lambda-feedback/eduVisionAeroRC/issues/new?template=release-request.yml)
 

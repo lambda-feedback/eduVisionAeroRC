@@ -2,6 +2,8 @@
 
 This function grades a student's photo submission by running a YOLOv8 object-detection model over each image and checking whether the expected RC component was detected with the highest confidence across the whole response.
 
+> **Only works with the Image Input response type.** The question must be configured to collect images; text/numeric/symbolic responses are not supported.
+
 - Entry point: [`evaluation_function/evaluation.py`](../evaluation_function/evaluation.py) — `evaluation_function(response, answer, params) -> Result`
 - Server wiring: [`evaluation_function/main.py`](../evaluation_function/main.py) registers `evaluation_function` as the `eval` handler and `preview_function` as the `preview` handler on the `lf_toolkit` IPC server.
 - Local CLI runner: [`evaluation_function/dev.py`](../evaluation_function/dev.py)
