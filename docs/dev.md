@@ -18,7 +18,9 @@ This matches `lf_toolkit`'s RPC handler, which calls `_call_user_handler("eval",
 
 ### `response`
 
-A list of dicts describing the images the student submitted:
+**Required** (the only required argument to this function) — a non-empty list of dicts describing the images the student submitted. An empty or falsy `response` (`[]`, `None`, etc.) short-circuits immediately with a "please upload at least one image" feedback message, before `params` is even read or the model is loaded.
+
+Each entry:
 
 ```json
 [
@@ -30,7 +32,7 @@ Only `url` (required) and `name` (optional, used for display) are read. `url` ma
 
 ### `answer`
 
-**Not read anywhere in the function.** The expected class comes exclusively from `params.target`. If your question's "answer" field is set in the platform, it has no effect on grading — do not rely on it. This is a deliberate simplification for this function (a single canonical `target` string per question is sufficient for a classification-style task), but it is a sharp edge for anyone used to the "answer vs. response" pattern from other Lambda Feedback functions.
+**Not required, and not read anywhere in the function** — whatever the platform passes here is ignored entirely. The expected class comes exclusively from `params.target`. If your question's "answer" field is set in the platform, it has no effect on grading — do not rely on it. This is a deliberate simplification for this function (a single canonical `target` string per question is sufficient for a classification-style task), but it is a sharp edge for anyone used to the "answer vs. response" pattern from other Lambda Feedback functions.
 
 ### `params`
 
@@ -38,17 +40,17 @@ See [Configuration Parameters](#configuration-parameters) below. Note that `Para
 
 ## Configuration Parameters
 
-Read with `params.get(name, default)`; all are optional.
+Read with `params.get(name, default)`; **every key is optional** — `params` may be an empty dict and the function still runs (it just won't be gradable without `target`). The only genuinely required input is `response` itself containing at least one image; an empty/missing `response` short-circuits before any of these are even read.
 
-| Parameter | Type | Default | Effect |
-|---|---|---|---|
-| `target` | `string` | `None` | Expected class label. Compared with **exact, case-sensitive string equality** against the label of the response's overall best detection. If `None`/empty, `is_correct` is always `False`. |
-| `model_name` | `string` | `"model.pt"` | Which `.pt` weights file (in `evaluation_function/`) to load. Only the basename is used — any directory component is stripped (`os.path.basename`) before joining with the evaluation_function directory, so this can't be used to escape that directory. Models are cached process-wide in `_model_cache`, keyed by the raw (unsanitized) name, so different callers requesting the same string share one loaded model. |
-| `conf_threshold` | `number` | `0.5` | Passed straight through as `model.predict(img, conf=conf_threshold)`. Detections below this confidence are discarded by Ultralytics before this function ever sees them. |
-| `draw_images` | `bool` | `True` | Controls both (a) whether bounding boxes are drawn on a copy of each image, and (b) whether that annotated image is uploaded to S3 and embedded in the feedback. When `False`, a plain `---` separator is emitted per image instead. `return_images` is accepted as a **deprecated alias** — if `draw_images` isn't set but `return_images` is, its value is used. This alias exists because an earlier version of this function (and an earlier version of this README) used `return_images` as the primary name; any question still configured that way keeps working. |
-| `show_target` | `bool` | `True` | Whether the "Target component: …" feedback block is emitted. |
-| `debug` | `bool` | `False` | Adds a `DEBUG Times` Markdown table (model load / avg image load / avg prediction / avg postprocess / avg draw / avg upload / analysis / feedback / total, all in seconds) and re-embeds every successfully-annotated image using its **original submitted URL** (not the freshly-uploaded one). Also causes image-upload failures to include the underlying exception message (see [Security Notes](#security-notes)). |
-| `debug_response` | `bool` | `False` | Emits a `DEBUG Response Structure` block containing `repr(response)` — the exact payload the platform handed to this function. Useful for diagnosing malformed/unexpected response shapes. |
+| Parameter | Required? | Type | Default | Effect |
+|---|---|---|---|---|
+| `target` | Optional | `string` | `None` | Expected class label. Compared with **exact, case-sensitive string equality** against the label of the response's overall best detection. Detection and all feedback generation happen unconditionally regardless of whether `target` is set — omitting it doesn't disable detection, it just means there's nothing to grade against, so `is_correct` is always `False`. This makes `target`-less questions usable as a pure "what did the model detect in my photo?" mode. Set it whenever the question needs an actual pass/fail outcome. |
+| `model_name` | Optional | `string` | `"model.pt"` | Which `.pt` weights file (in `evaluation_function/`) to load. Only the basename is used — any directory component is stripped (`os.path.basename`) before joining with the evaluation_function directory, so this can't be used to escape that directory. Models are cached process-wide in `_model_cache`, keyed by the raw (unsanitized) name, so different callers requesting the same string share one loaded model. |
+| `conf_threshold` | Optional | `number` | `0.5` | Passed straight through as `model.predict(img, conf=conf_threshold)`. Detections below this confidence are discarded by Ultralytics before this function ever sees them. |
+| `draw_images` | Optional | `bool` | `True` | Controls both (a) whether bounding boxes are drawn on a copy of each image, and (b) whether that annotated image is uploaded to S3 and embedded in the feedback. When `False`, a plain `---` separator is emitted per image instead. `return_images` is accepted as a **deprecated alias** — if `draw_images` isn't set but `return_images` is, its value is used. This alias exists because an earlier version of this function (and an earlier version of this README) used `return_images` as the primary name; any question still configured that way keeps working. |
+| `show_target` | Optional | `bool` | `True` | Whether the "Target component: …" feedback block is emitted. |
+| `debug` | Optional | `bool` | `False` | Adds a `DEBUG Times` Markdown table (model load / avg image load / avg prediction / avg postprocess / avg draw / avg upload / analysis / feedback / total, all in seconds) and re-embeds every successfully-annotated image using its **original submitted URL** (not the freshly-uploaded one). Also causes image-upload failures to include the underlying exception message (see [Security Notes](#security-notes)). |
+| `debug_response` | Optional | `bool` | `False` | Emits a `DEBUG Response Structure` block containing `repr(response)` — the exact payload the platform handed to this function. Useful for diagnosing malformed/unexpected response shapes. |
 
 ## Model Files & Detectable Classes
 

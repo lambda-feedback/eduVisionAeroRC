@@ -31,19 +31,19 @@ For the full technical write-up (algorithm, internals, gotchas) see **[docs/dev.
 
 ## Parameters
 
-All parameters are read from the `params` argument with `params.get(name, default)`, so any of them may be omitted from a question's configuration.
+`response` (the student's submitted image(s)) is the only **required** input — if it's empty or missing, the function short-circuits with a "please upload an image" message instead of crashing. Every key in `params` below is **optional**: each is read with `params.get(name, default)`, so a question's configuration can set as few or as many of them as it needs, and any left unset silently fall back to their default.
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `target` | `string` | `None` | Expected component class name. Must exactly match one of the model's class labels (see [class lists](docs/dev.md#model-files--detectable-classes)) for `is_correct` to be `True`. If omitted, the response is always marked incorrect. |
-| `model_name` | `string` | `"model.pt"` | Filename of the `.pt` weights file to load from `evaluation_function/`. Only the filename is used (any path component is stripped), so this cannot be used to load files outside that directory. See available models below. |
-| `conf_threshold` | `number` | `0.5` | Minimum confidence (0–1) Ultralytics requires before returning a detection. |
-| `draw_images` | `bool` | `True` | Whether to draw bounding-box annotations and upload/embed the annotated image in the feedback. `return_images` is accepted as a deprecated alias for backwards compatibility. |
-| `show_target` | `bool` | `True` | Whether to include the "Target component" line in the feedback. |
-| `debug` | `bool` | `False` | Adds a step-by-step timing table and re-embeds every annotated image by its *original submitted* URL. Also includes the underlying error detail when an image upload fails (suppressed otherwise, to avoid leaking S3/AWS internals to students). |
-| `debug_response` | `bool` | `False` | Dumps the raw `repr()` of the entire `response` payload as feedback — useful to see exactly what the platform sent. |
+| Parameter | Required? | Type | Default | Description |
+|---|---|---|---|---|
+| `target` | Optional | `string` | `None` | Expected component class name. Must exactly match one of the model's class labels (see [class lists](docs/dev.md#model-files--detectable-classes)) for `is_correct` to be `True`. If omitted, detection still runs as normal and all the usual feedback (per-image results, annotated images, overall best) is returned — there's just nothing to grade against, so `is_correct` is always `False`. Useful for detection-only/practice questions where you don't need a pass/fail result. In practice, set this whenever the question needs an actual graded outcome. |
+| `model_name` | Optional | `string` | `"model.pt"` | Filename of the `.pt` weights file to load from `evaluation_function/`. Only the filename is used (any path component is stripped), so this cannot be used to load files outside that directory. See available models below. |
+| `conf_threshold` | Optional | `number` | `0.5` | Minimum confidence (0–1) Ultralytics requires before returning a detection. |
+| `draw_images` | Optional | `bool` | `True` | Whether to draw bounding-box annotations and upload/embed the annotated image in the feedback. `return_images` is accepted as a deprecated alias for backwards compatibility. |
+| `show_target` | Optional | `bool` | `True` | Whether to include the "Target component" line in the feedback. |
+| `debug` | Optional | `bool` | `False` | Adds a step-by-step timing table and re-embeds every annotated image by its *original submitted* URL. Also includes the underlying error detail when an image upload fails (suppressed otherwise, to avoid leaking S3/AWS internals to students). |
+| `debug_response` | Optional | `bool` | `False` | Dumps the raw `repr()` of the entire `response` payload as feedback — useful to see exactly what the platform sent. |
 
-> The `answer` argument and the `is_latex` / `simplify` / `symbols` keys from the generic `Params` type are not used by this function.
+> The `answer` argument and the `is_latex` / `simplify` / `symbols` keys from the generic `Params` type are not used by this function — nothing needs to be set there.
 
 ## Detectable Objects / Models
 

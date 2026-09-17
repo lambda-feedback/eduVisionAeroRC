@@ -18,9 +18,22 @@ In the question's evaluation function parameters, set:
 }
 ```
 
-`target` must be the **exact** component name from the list below (copy-paste it — spelling, spacing, capitalization and punctuation all matter, and a few names have deliberate quirks baked into how the model was trained).
+`target` is **optional**. When set, it must be the **exact** component name from the list below (copy-paste it — spelling, spacing, capitalization and punctuation all matter, and a few names have deliberate quirks baked into how the model was trained).
 
-If you don't set `target`, the response will always be marked incorrect — the "answer" field on the question is not used by this function.
+If you leave `target` unset, the question is never marked correct (there's nothing to grade against) — but detection still runs normally and students still get full feedback on what was detected in their photo(s). This is useful for a practice/exploration question where you just want students to see what the model recognizes, without a pass/fail outcome. Note the "answer" field on the question is not used by this function either way — only `target` drives grading.
+
+### What's required vs. optional
+
+The only thing that's actually required is that the student submits at least one photo — everything else below is optional and falls back to a sensible default if you leave it out.
+
+| Setting | Required? | If you leave it out |
+|---|---|---|
+| A student photo | **Required** | Nothing to grade — the student sees a "please upload at least one image" message. |
+| `target` | Optional | The question can never be marked correct (see above), but detection/feedback still works. Set this whenever you want an actual pass/fail result. |
+| `model_name` | Optional | Uses the default full component-set model. Only needed if you want the smaller wishbone-only model. |
+| `show_target` | Optional | Defaults to showing the target in feedback. |
+| `draw_images` | Optional | Defaults to showing annotated photos in feedback. |
+| `debug` / `debug_response` | Optional | Off by default — only turn these on while building/testing a question. |
 
 ### Recommended settings
 
