@@ -70,3 +70,30 @@ class TestEvaluationFunction(unittest.TestCase):
         self.assertIn("is_correct", result)
         # show_target=False must suppress the "Target" feedback section
         self.assertNotIn("Target component", result["feedback"])
+
+    def test_allowed_classes_restricts_detection_and_reports_unmatched(self):
+        import os
+        local_image_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "evaluation_test.py.jpg"))
+        response = [{
+            "comment": "",
+            "name": "evaluation_test.py.jpg",
+            "size": os.path.getsize(local_image_path),
+            "type": "image/jpeg",
+            "url": f"file://{local_image_path}",
+        }]
+        params = Params(
+            target="test_class",
+            draw_images=False,
+            debug=True,
+            allowed_classes=["shock absorber", "not_a_real_class"],
+        )
+
+        result = evaluation_function(response, "test_answer", params).to_dict()
+
+        self.assertIsInstance(result, dict)
+        self.assertIn("is_correct", result)
+        # Unmatched names must be surfaced in debug feedback so typos are easy to catch.
+        # (Note: like other `append_feedback` titles in this function, "DEBUG Allowed
+        # Classes" is only an internal grouping tag and isn't part of the rendered
+        # feedback string - only the body text is, per lf_toolkit.Result.feedback.)
+        self.assertIn("not_a_real_class", result["feedback"])

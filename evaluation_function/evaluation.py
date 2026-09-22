@@ -47,6 +47,11 @@ def evaluation_function(
     show_target = params.get("show_target", True)
     model_name = params.get("model_name", "model.pt")
     conf_threshold = params.get("conf_threshold", 0.5)
+    # Optional array of class names to restrict detection to (e.g. only
+    # look for specific components). Names are matched against the
+    # model's own class names (model.names), case-sensitive but with
+    # surrounding whitespace ignored.
+    allowed_classes = params.get("allowed_classes", None)
 
     model_load_start = time.time()
 
@@ -62,6 +67,21 @@ def evaluation_function(
     model_load_time = time.time() - model_load_start
 
     model = _model_cache[model_name]
+
+    # Resolve `allowed_classes` names to the class indices YOLO expects.
+    # Unmatched names are kept aside so they can be surfaced in debug
+    # feedback instead of silently doing nothing.
+    class_indices = None
+    unmatched_classes = []
+    if allowed_classes:
+        name_to_idx = {name: idx for idx, name in model.names.items()}
+        class_indices = []
+        for name in allowed_classes:
+            key = str(name).strip()
+            if key in name_to_idx:
+                class_indices.append(name_to_idx[key])
+            else:
+                unmatched_classes.append(name)
 
     target_class = params.get("target", None)
 
@@ -195,7 +215,7 @@ def evaluation_function(
             load_times.append(time.time() - load_start)
 
             pred_start = time.time()
-            results = model.predict(img, conf=conf_threshold)
+            results = model.predict(img, conf=conf_threshold, classes=class_indices)
             prediction_times.append(time.time() - pred_start)
 
             process_start = time.time()
@@ -377,6 +397,14 @@ def evaluation_function(
             #print("Failed to print response structure", e)
 
     if params.get('debug', False):
+
+        if allowed_classes:
+            append_feedback(
+                "DEBUG Allowed Classes",
+                f"- **Requested:** `{allowed_classes}`\n"
+                f"- **Matched indices:** `{class_indices}`\n"
+                f"- **Unmatched names:** `{unmatched_classes if unmatched_classes else 'none'}`"
+            )
 
         # also check if YOLO can use GPU (torch.cuda availability)
         #try:

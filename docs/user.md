@@ -34,6 +34,7 @@ The only thing that's actually required is that the student submits at least one
 | `show_target` | Optional | Defaults to showing the target in feedback. |
 | `draw_images` | Optional | Defaults to showing annotated photos in feedback. |
 | `debug` / `debug_response` | Optional | Off by default — only turn these on while building/testing a question. |
+| `allowed_classes` | Optional | By default the model can detect any component it was trained on. Set this to a list of component names (from the list below) to make it look for only those — useful when a question should only ever recognise a handful of related parts. |
 
 ### Recommended settings
 
@@ -47,6 +48,16 @@ The only thing that's actually required is that the student submits at least one
 - `show_target: true` — shows students which component they were asked to photograph.
 - `draw_images: true` — shows students an annotated copy of their photo (boxes around what was detected), which helps them understand *why* they got the result they did.
 - Leave `debug` off for live questions — it's only useful while you're building/testing a question.
+
+### Limiting which components the model looks for (`allowed_classes`)
+
+By default the model will try to recognise any of the components it was trained on, even ones that have nothing to do with the current question. If a question should only ever be graded against a specific subset of parts (e.g. a topic covering just the shock absorber and rear gearbox assembly), set `allowed_classes` to an array of the exact component names — copy them from the list below, same spelling/punctuation rules as `target`:
+
+| Key | Value |
+|---|---|
+| `allowed_classes` | `["shock absorber", "shockabsorber_spring", "Shockabsorber.oring", "rear diff", "gearbox gear", "gearbox shaft+bevel", "gearbox bearing", "motor", "battery", "gearbox sub asse", "rear gear box top", "Steering_tierod", "suspension, wishbone, front, up,rhs", "suspension,wishbone,front,bot,rhs"]` |
+
+With this set, the model will never report any component outside this list, even if one happens to be visible in the background of a photo. This is separate from `target` — you still need to set `target` (to one of the names in `allowed_classes`) for the question to be gradable as correct/incorrect; `allowed_classes` only narrows what the model is allowed to see.
 
 ## Full list of valid `target` values
 
