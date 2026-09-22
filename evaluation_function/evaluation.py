@@ -431,7 +431,7 @@ def evaluation_function(
         append_feedback(
             "DEBUG Times",
             f"| Step | Time (s) |\n|---|---|\n"
-            f"| Model load | {model_load_time:.3f} |\n"
+            f"| Models load | {model_load_time:.3f} |\n"
             f"| Avg image load | {avg_load_time:.3f} |\n"
             f"| Avg prediction | {avg_prediction_time:.3f} |\n"
             f"| Avg detection process | {avg_process_time:.3f} |\n"
