@@ -75,13 +75,17 @@ def evaluation_function(
     unmatched_classes = []
     if allowed_classes:
         name_to_idx = {name: idx for idx, name in model.names.items()}
-        class_indices = []
+        matched_indices = []
         for name in allowed_classes:
             key = str(name).strip()
             if key in name_to_idx:
-                class_indices.append(name_to_idx[key])
+                matched_indices.append(name_to_idx[key])
             else:
                 unmatched_classes.append(name)
+        # An empty list means "match no class" to YOLO, not "don't filter".
+        # Only apply the filter if at least one name actually matched.
+        if matched_indices:
+            class_indices = matched_indices
 
     target_class = params.get("target", None)
 
