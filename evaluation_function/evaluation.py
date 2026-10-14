@@ -118,7 +118,18 @@ def evaluation_function(
         h, w = img_cv.shape[:2]
         cx, cy = w // 2, h // 2
 
-        cv2.circle(img_cv, (cx, cy), 7, (0, 255, 255), -1)
+        # Every size below is derived from the image's shorter side so the
+        # annotations look the same whether the student uploads a 640px
+        # thumbnail or a 4032x3024 phone photo. With FONT_HERSHEY_SIMPLEX,
+        # font scale 1 is ~22px tall, so short_side / 900 makes the label
+        # text roughly 2.5% of the shorter side (~75px on a 3024px photo).
+        short_side = min(h, w)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        base_font_scale = max(0.4, short_side / 900)
+        box_thickness = max(2, round(short_side / 400))
+        best_box_thickness = box_thickness + max(1, box_thickness // 2)
+
+        cv2.circle(img_cv, (cx, cy), max(4, short_side // 150), (0, 255, 255), -1)
 
         for i, det in enumerate(detections):
 
@@ -128,33 +139,74 @@ def evaluation_function(
             color = get_class_color(str(cls))
             color_bgr = (color[2], color[1], color[0])
 
-            outline = (0, 0, 255) if i == best_idx else color_bgr
-            thickness = 3 if i == best_idx else 2
+            is_best = i == best_idx
+            outline = (0, 0, 255) if is_best else color_bgr
 
-            cv2.rectangle(img_cv, (x1, y1), (x2, y2), outline, thickness)
+            cv2.rectangle(
+                img_cv, (x1, y1), (x2, y2), outline,
+                best_box_thickness if is_best else box_thickness,
+            )
 
             label = f"{cls}: {conf:.2f}"
 
-            (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+            # Shrink the label if it would be wider than the image, so long
+            # class names never get cut off at the right edge.
+            font_scale = base_font_scale
+            text_thickness = max(1, round(font_scale * 2))
+            (tw, th), baseline = cv2.getTextSize(label, font, font_scale, text_thickness)
+            pad = max(2, round(th * 0.3))
+            if tw + 2 * pad > w:
+                font_scale *= w / (tw + 2 * pad)
+                text_thickness = max(1, round(font_scale * 2))
+                (tw, th), baseline = cv2.getTextSize(label, font, font_scale, text_thickness)
+                pad = max(2, round(th * 0.3))
 
-            cv2.rectangle(img_cv, (x1, y1 - th - 6), (x1 + tw + 10, y1), outline, -1)
+            label_w = tw + 2 * pad
+            label_h = th + baseline + 2 * pad
+
+            # Place the label just above the box; if that would go past the
+            # top of the image, put it just inside the top of the box instead.
+            # Then slide it left if it would run off the right edge.
+            label_x = max(0, min(x1, w - label_w))
+            label_y = y1 - label_h if y1 - label_h >= 0 else max(0, y1)
+            label_y = min(label_y, h - label_h)
+
+            cv2.rectangle(
+                img_cv, (label_x, label_y), (label_x + label_w, label_y + label_h),
+                outline, -1,
+            )
+
+            # Pick black or white text depending on how bright the label
+            # background is, so the text always has strong contrast.
+            b, g, r = outline
+            luminance = 0.299 * r + 0.587 * g + 0.114 * b
+            text_color = (0, 0, 0) if luminance > 150 else (255, 255, 255)
 
             cv2.putText(
                 img_cv,
                 label,
-                (x1 + 5, y1 - 5),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (255, 255, 255),
-                2,
+                (label_x + pad, label_y + pad + th),
+                font,
+                font_scale,
+                text_color,
+                text_thickness,
+                cv2.LINE_AA,
             )
 
-            if i == best_idx:
+            if is_best:
 
-                margin = 6
-                star_r = 14
+                # Star badge in the box's top-right corner, scaled to the
+                # image but never more than a fraction of the box itself so
+                # it doesn't cover the detected part on small detections.
+                box_short = max(1, min(x2 - x1, y2 - y1))
+                star_r = max(6, min(short_side // 60, box_short // 8))
+                margin = best_box_thickness + max(2, star_r // 3)
                 star_cx = x2 - margin - star_r
                 star_cy = y1 + margin + star_r
+
+                # If the label was drawn inside the box, move the star below it.
+                if label_y >= y1:
+                    star_cy = max(star_cy, label_y + label_h + margin + star_r)
 
                 pts = []
 
@@ -167,8 +219,12 @@ def evaluation_function(
 
                     pts.append((px, py))
 
+                star_thickness = max(2, star_r // 5)
                 for j in range(5):
-                    cv2.line(img_cv, pts[j], pts[(j + 2) % 5], (0, 255, 255), 3)
+                    cv2.line(
+                        img_cv, pts[j], pts[(j + 2) % 5], (0, 255, 255),
+                        star_thickness, cv2.LINE_AA,
+                    )
 
         return Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
 
