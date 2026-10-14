@@ -30,7 +30,7 @@ This function is used entirely through the Lambda Feedback platform UI — no re
 ## How It Works
 
 1. **Image input:** Students upload photo(s) via the platform's Image Input component. If a student submits nothing, feedback asks for an image and no model is loaded.
-2. **Model loading:** The requested YOLO model (`model_name`, default `model.pt`) is loaded from the `evaluation_function` directory and cached in memory for the lifetime of the process, so repeated invocations on a warm container are fast.
+2. **Model loading:** The requested YOLO model (`model_name`, default `model_servo.pt`) is loaded from the `evaluation_function` directory and cached in memory for the lifetime of the process, so repeated invocations on a warm container are fast.
 3. **Detection:** For each image, the model predicts bounding boxes, class labels and confidence scores (`conf_threshold` minimum, default `0.5`). Detections whose box contains the image's center point are preferred; if none do, all detections are considered. Within that pool, the single highest-confidence detection becomes that image's "best" result.
 4. **Overall result:** Across *all* submitted images, the single highest-confidence "best" detection (from any one image) becomes the response's overall detected class — this is what gets compared to `target`. See the [multi-image caveat](docs/dev.md#caveat-one-bad-photo-can-decide-the-whole-response) for why this matters.
 5. **Annotation:** If enabled, every detected box is drawn on the image (color derived from the class name), the winning "best" box is highlighted with a red outline and a star badge, and the image center is marked with a dot.
@@ -44,7 +44,7 @@ The only thing actually required is that the student submits at least one photo 
 | Parameter | Required? | Type | Default | Description |
 |---|---|---|---|---|
 | `target` | Optional | `string` | `None` | Expected component class name. Must exactly match one of the model's class labels (see [class lists](docs/dev.md#model-files--detectable-classes)) for the question to be marked correct. If omitted, detection still runs as normal and all the usual feedback (per-image results, annotated images, overall best) is returned — there's just nothing to grade against, so the question is never marked correct. Useful for detection-only/practice questions where you don't need a pass/fail result. In practice, set this whenever the question needs an actual graded outcome. |
-| `model_name` | Optional | `string` | `"model.pt"` | Filename of the `.pt` weights file to load from `evaluation_function/`. Only the filename is used (any path component is stripped), so this cannot be used to load files outside that directory. See available models below. |
+| `model_name` | Optional | `string` | `"model_servo.pt"` | Filename of the `.pt` weights file to load from `evaluation_function/`. Only the filename is used (any path component is stripped), so this cannot be used to load files outside that directory. See available models below. |
 | `conf_threshold` | Optional | `number` | `0.5` | Minimum confidence (0–1) Ultralytics requires before returning a detection. |
 | `allowed_classes` | Optional | `array[string]` | `None` | Restricts detection to only these class names — anything else the model would otherwise detect is filtered out before it's considered, not just hidden from feedback. Each name must match a model class label exactly (same case-sensitive rules as `target`; surrounding whitespace is ignored). Names that don't match any class in the loaded model are ignored at runtime, but listed in `debug` mode feedback so typos are easy to catch. Useful for scoping a question to a handful of related parts. |
 | `draw_images` | Optional | `bool` | `True` | Whether to draw bounding-box annotations and upload/embed the annotated image in the feedback. `return_images` is accepted as a deprecated alias for backwards compatibility. |
@@ -54,15 +54,26 @@ The only thing actually required is that the student submits at least one photo 
 
 ## Detectable Objects / Models
 
-Three model weight files ship in `evaluation_function/`:
+Four model weight files ship in `evaluation_function/`:
 
 | File | Classes | Notes |
 |---|---|---|
-| `model.pt` (default) | 34 | Full Aero RC drivetrain/suspension component set. |
+| `model_servo.pt` (default) | 35 | Full Aero RC component set **plus the new `Servo_saver` class**. Based on YOLO26-L. Superset of `model.pt`, so every existing `target` keeps working. |
+| `model.pt` | 34 | Previous default. Full Aero RC drivetrain/suspension component set, without `Servo_saver`. Set `model_name: "model.pt"` to keep using it. |
 | `model_full_L_Rotation.pt` | 34 (same set) | Same classes as `model.pt`, trained with additional rotation-augmented images; larger weights file. |
 | `model_3_PARTS.pt` | 3 | Only the three wishbone/suspension-arm classes — for questions scoped to that sub-assembly. |
 
 `target` must exactly match one of these labels (case-sensitive, including the spacing/punctuation below) for `is_correct` to be `True`.
+
+### `model_servo.pt` (default) — 35 classes
+
+All 34 classes listed in the next section, plus one new class:
+
+```
+Servo_saver
+```
+
+`Servo_saver` is only available in `model_servo.pt`. Questions targeting it must use the default model (or set `model_name: "model_servo.pt"` explicitly).
 
 ### `model.pt` / `model_full_L_Rotation.pt` — 34 classes
 
@@ -141,7 +152,7 @@ See [docs/user.md](docs/user.md#full-list-of-valid-target-values) for a teacher-
 - `evaluation_function/main.py` – IPC server entrypoint
 - `evaluation_function/dev.py` – CLI entrypoint for local development (`python -m evaluation_function.dev <answer> <response>`)
 - `evaluation_function/evaluation_test.py` / `preview_test.py` – Unit tests
-- `evaluation_function/model.pt`, `model_3_PARTS.pt`, `model_full_L_Rotation.pt` – YOLO model weights
+- `evaluation_function/model_servo.pt` (default), `model.pt`, `model_3_PARTS.pt`, `model_full_L_Rotation.pt` – YOLO model weights
 - `train_data_orginal/` – Local-only training data (git-ignored, not part of the deployed image)
 - `config.json` – Deployment configuration (evaluation function name)
 - `docs/dev.md` – In-depth developer documentation

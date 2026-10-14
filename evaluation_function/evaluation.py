@@ -45,7 +45,7 @@ def evaluation_function(
     # backwards compatibility with questions configured before the rename.
     draw_images = params.get("draw_images", params.get("return_images", True))
     show_target = params.get("show_target", True)
-    model_name = params.get("model_name", "model.pt")
+    model_name = params.get("model_name", "model_servo.pt")
     conf_threshold = params.get("conf_threshold", 0.5)
     # Optional array of class names to restrict detection to (e.g. only
     # look for specific components). Names are matched against the

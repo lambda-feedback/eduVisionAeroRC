@@ -30,7 +30,7 @@ The only thing that's actually required is that the student submits at least one
 |---|---|---|
 | A student photo | **Required** | Nothing to grade — the student sees a "please upload at least one image" message. |
 | `target` | Optional | The question can never be marked correct (see above), but detection/feedback still works. Set this whenever you want an actual pass/fail result. |
-| `model_name` | Optional | Uses the default full component-set model. Only needed if you want the smaller wishbone-only model. |
+| `model_name` | Optional | Uses the default full component-set model. Only needed if you want an older model or the smaller wishbone-only model. |
 | `show_target` | Optional | Defaults to showing the target in feedback. |
 | `draw_images` | Optional | Defaults to showing annotated photos in feedback. |
 | `debug` / `debug_response` | Optional | Off by default — only turn these on while building/testing a question. |
@@ -64,6 +64,8 @@ With this set, the model will never report any component outside this list, even
 ### Full component set (default model)
 
 Use these with the default model (you don't need to set `model_name` for these):
+
+> **New:** the default model can now also recognise the **servo saver**. Its exact `target` value is `Servo_saver` (listed at the end below). This component is only recognised by the default model.
 
 ```
 battery
@@ -100,6 +102,7 @@ DT.f.diff.main.ase
 Shockabsorber.oring
 Shockabsorber.sealretainer
 veiw Shockabsorber.springnut veiw
+Servo_saver
 ```
 
 ### Wishbone-only set (`model_name: "model_3_PARTS.pt"`)
@@ -138,5 +141,5 @@ suspension,wishbone,rear,up,rhs
 
 - **"My student says the photo clearly shows the right part but it was marked wrong."** Check the per-photo feedback (turn on `draw_images` if it's off) — the model may have detected the part with low confidence, or detected something else in the frame with higher confidence, or the part wasn't centered in the photo.
 - **Annotated photos aren't showing up in feedback.** Check `draw_images` is `true` for the question.
-- **Nothing is being detected at all.** Double check `target` is spelled/punctuated exactly as in the list above, and that `model_name` (if set) matches the model that actually has that class (e.g. the wishbone classes only exist in `model_3_PARTS.pt` as well as the default `model.pt`; most other classes only exist in the default/full model).
+- **Nothing is being detected at all.** Double check `target` is spelled/punctuated exactly as in the list above, and that `model_name` (if set) matches the model that actually has that class (e.g. the wishbone classes only exist in `model_3_PARTS.pt` as well as the default/full models; `Servo_saver` only exists in the default `model_servo.pt`; most other classes only exist in the default/full models).
 - For anything deeper (model internals, parameter reference for developers, known limitations), see **[docs/dev.md](dev.md)**.

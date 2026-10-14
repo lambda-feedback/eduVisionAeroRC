@@ -45,7 +45,7 @@ Read with `params.get(name, default)`; **every key is optional** — `params` ma
 | Parameter | Required? | Type | Default | Effect |
 |---|---|---|---|---|
 | `target` | Optional | `string` | `None` | Expected class label. Compared with **exact, case-sensitive string equality** against the label of the response's overall best detection. Detection and all feedback generation happen unconditionally regardless of whether `target` is set — omitting it doesn't disable detection, it just means there's nothing to grade against, so `is_correct` is always `False`. This makes `target`-less questions usable as a pure "what did the model detect in my photo?" mode. Set it whenever the question needs an actual pass/fail outcome. |
-| `model_name` | Optional | `string` | `"model.pt"` | Which `.pt` weights file (in `evaluation_function/`) to load. Only the basename is used — any directory component is stripped (`os.path.basename`) before joining with the evaluation_function directory, so this can't be used to escape that directory. Models are cached process-wide in `_model_cache`, keyed by the raw (unsanitized) name, so different callers requesting the same string share one loaded model. |
+| `model_name` | Optional | `string` | `"model_servo.pt"` | Which `.pt` weights file (in `evaluation_function/`) to load. Only the basename is used — any directory component is stripped (`os.path.basename`) before joining with the evaluation_function directory, so this can't be used to escape that directory. Models are cached process-wide in `_model_cache`, keyed by the raw (unsanitized) name, so different callers requesting the same string share one loaded model. |
 | `conf_threshold` | Optional | `number` | `0.5` | Passed straight through as `model.predict(img, conf=conf_threshold)`. Detections below this confidence are discarded by Ultralytics before this function ever sees them. |
 | `allowed_classes` | Optional | `array[string]` | `None` | Restricts detection to only these class names — anything else the model would normally detect is filtered out entirely (not just hidden from feedback). Each name is matched against `model.names` with surrounding whitespace stripped, otherwise exact/case-sensitive, same rules as `target`. Matched names are resolved to their class indices and passed as `model.predict(img, conf=conf_threshold, classes=class_indices)` — Ultralytics itself discards non-matching detections before this function sees them. Names that don't match any class in the loaded model are silently ignored at runtime (no detections for them either way) but are surfaced in `debug` mode feedback (`DEBUG Allowed Classes` block) so typos are easy to catch while building a question. `target` still needs to be one of the allowed names for the question to ever be gradable as correct — this parameter doesn't set `target`, it only narrows what the model looks for. |
 | `draw_images` | Optional | `bool` | `True` | Controls both (a) whether bounding boxes are drawn on a copy of each image, and (b) whether that annotated image is uploaded to S3 and embedded in the feedback. When `False`, a plain `---` separator is emitted per image instead. `return_images` is accepted as a **deprecated alias** — if `draw_images` isn't set but `return_images` is, its value is used. This alias exists because an earlier version of this function (and an earlier version of this README) used `return_images` as the primary name; any question still configured that way keeps working. |
@@ -55,9 +55,19 @@ Read with `params.get(name, default)`; **every key is optional** — `params` ma
 
 ## Model Files & Detectable Classes
 
-All three files live in `evaluation_function/` and are loaded via `model_name`. Class names below were read directly from each model's `model.names` (Ultralytics), so they are the authoritative, exact strings required for `target` to match.
+All four files live in `evaluation_function/` and are loaded via `model_name`. Class names below were read directly from each model's `model.names` (Ultralytics), so they are the authoritative, exact strings required for `target` to match.
 
-### `model.pt` (default) and `model_full_L_Rotation.pt` — 34 classes
+### `model_servo.pt` (default) — 35 classes
+
+Current default. Trained from a YOLO26-L base (`yolo26l.pt`), so it needs Ultralytics 8.4+ (the lockfile pins 8.4.8). Its label set is the 34 classes of `model.pt` below, in the same order (indices 0–33), plus one new class at index 34:
+
+```
+Servo_saver
+```
+
+Because it is a strict superset of `model.pt`, switching the default to it does not break any existing `target` / `allowed_classes` value. Questions that need the old behaviour can pin `model_name: "model.pt"`.
+
+### `model.pt` and `model_full_L_Rotation.pt` — 34 classes
 
 Both files expose the identical 34-class label set (`model_full_L_Rotation.pt` was trained with extra rotation-augmented images for more orientation-robust detection; it is otherwise a drop-in replacement).
 
