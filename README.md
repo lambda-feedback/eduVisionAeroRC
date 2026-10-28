@@ -15,7 +15,7 @@ This repository contains an evaluation function for the **Aero RC** project on t
 - Compare the single most confident detection across the whole response against an expected class, configured per-question via the `target` parameter.
 - Return `is_correct` plus rich Markdown feedback: per-image results, annotated/uploaded images, and optional debug/timing information.
 
-**Important:** Grading is driven entirely by the `target` key set in the question's **Evaluation Function Parameters** — the question's own Answer field is **not used**. See [Setting Up a Question](#setting-up-a-question) below.
+**Important:** Grading is driven entirely by the `target` key set in the question's **Evaluation Function Parameters** — the question's own Answer field is **not used**. See [Setting Up a Question](#setting-up-a-question) below .
 
 For the full technical write-up (algorithm, internals, gotchas) see **[docs/dev.md](docs/dev.md)**. For a teacher-facing guide to configuring a question see **[docs/user.md](docs/user.md)**.
 
